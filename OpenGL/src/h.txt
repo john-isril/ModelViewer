@@ -1,0 +1,1380 @@
+Space = 32,
+		Apostrophe = 39,
+		Comma = 44,
+		Minus = 45,
+		Period = 46,
+		Slash = 47,
+		// top row number keys
+		K0 = 48, /* 0 */
+		K1 = 49, /* 1 */
+		K2 = 50, /* 2 */
+		K3 = 51, /* 3 */
+		K4 = 52, /* 4 */
+		K5 = 53, /* 5 */
+		K6 = 54, /* 6 */
+		K7 = 55, /* 7 */
+		K8 = 56, /* 8 */
+		K9 = 57, /* 9 */
+		Semicolon = 59,
+		Equal = 61,
+		A = 65,
+		B = 66,
+		C = 67,
+		D = 68,
+		E = 69,
+		F = 70,
+		G = 71,
+		H = 72,
+		I = 73,
+		J = 74,
+		K = 75,
+		L = 76,
+		M = 77,
+		N = 78,
+		O = 79,
+		P = 80,
+		Q = 81,
+		R = 82,
+		S = 83,
+		T = 84,
+		U = 85,
+		V = 86,
+		W = 87,
+		X = 88,
+		Y = 89,
+		Z = 90,
+		LeftBracket = 91,
+		Backslash = 92,
+		RightBracket = 93,
+		GraveAccent = 96,
+		World1 = 161, /* non-US #1 */
+		World2 = 162, /* non-US #2 */
+		Escape = 256,
+		Enter = 257,
+		Tab = 258,
+		Backspace = 259,
+		Insert = 260,
+		Delete = 261,
+		Right = 262,
+		Left = 263,
+		Down = 264,
+		Up = 265,
+		PageUp = 266,
+		PageDown = 267,
+		Home = 268,
+		End = 269,
+		CapsLock = 280,
+		ScrollLock = 281,
+		NumLock = 282,
+		PrintScreen = 283,
+		Pause = 284,
+		F1 = 290,
+		F2 = 291,
+		F3 = 292,
+		F4 = 293,
+		F5 = 294,
+		F6 = 295,
+		F7 = 296,
+		F8 = 297,
+		F9 = 298,
+		F10 = 299,
+		F11 = 300,
+		F12 = 301,
+		F13 = 302,
+		F14 = 303,
+		F15 = 304,
+		F16 = 305,
+		F17 = 306,
+		F18 = 307,
+		F19 = 308,
+		F20 = 309,
+		F21 = 310,
+		F22 = 311,
+		F23 = 312,
+		F24 = 313,
+		F25 = 314,
+		KP0 = 320,
+		KP1 = 321,
+		KP2 = 322,
+		KP3 = 323,
+		KP4 = 324,
+		KP5 = 325,
+		KP6 = 326,
+		KP7 = 327,
+		KP8 = 328,
+		KP9 = 329,
+		KPDecimal = 330,
+		KPDivide = 331,
+		KPMultiply = 332,
+		KPSubtract = 333,
+		KPAdd = 334,
+		KPEnter = 335,
+		KPEqual = 336,
+		LeftShift = 340,
+		LeftControl = 341,
+		LeftAlt = 342,
+		LeftSuper = 343,
+		RightShift = 344,
+		RightCtrl = 345,
+		RightAlt = 346,
+		RightSuper = 347,
+		Menu = 348
+/******************************************************************************
+
+                              Online C++ Compiler.
+               Code, Compile, Run and Debug C++ program online.
+Write your code in this editor and press "Run" button to compile and execute it.
+
+*******************************************************************************/
+
+#include <iostream>
+#include <vector>
+#include <iomanip>
+#include <stdio.h>
+using namespace std;
+
+vector<float> LocalToWorld(const vector<float> &local_space_position, const vector<vector<float>> basis_vectors, const vector<float> &local_coordinates)
+{
+    vector<float> world_coordinates = local_space_position;
+    
+    // i will represent each axis value (i = 0 is the x value, i = 1 is the y, i = 1 is z)
+    // i will also represent the basis vector (i = 0 is right, i = 1 is up, i = 2 is forward)
+    for (std::size_t i {0}; i < local_coordinates.size(); ++i)
+    {
+        // j will represent the axis value of the basis vector i
+        for (std::size_t j {0}; j < basis_vectors[i].size(); ++j)
+        {
+            world_coordinates[j] += local_coordinates[i] * basis_vectors[i][j];
+        }
+    }
+    
+    return world_coordinates;
+}
+
+float Dot(const vector<float>& vec1, const vector<float>& vec2)
+{
+    return (vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2]);
+}
+
+vector<float> WorldToLocal(const vector<float>& world_coordinates, const vector<float> &local_space_position, const vector<vector<float>> &basis_vectors)
+{
+    vector<float> local_coordinates(3);
+    
+    vector<float> displacement_from_local_space {
+        world_coordinates[0] - local_space_position[0], 
+        world_coordinates[1] - local_space_position[1],
+        world_coordinates[2] - local_space_position[2]
+    };
+    
+    for (size_t axis_value {0}; axis_value < 3; ++axis_value)
+    {
+        local_coordinates[axis_value] = Dot(displacement_from_local_space, basis_vectors[axis_value]);
+    }
+    
+    return local_coordinates;
+}
+
+int main()
+{
+    vector<float> local_space_position{1.0f, 10.0f, 3.0f};
+    
+    vector<vector<float>> basis_vectors {
+        {0.866f, 0.0f, -0.500f},
+        {0.0f, 1.0f, 0.0f},
+        {0.500f, 0.0f, 0.866f}
+    };
+    
+    vector<float> world_coordinates {0.0f, 0.0f, 0.0f};
+    vector<float> local_coordinates = WorldToLocal(world_coordinates, local_space_position, basis_vectors);
+    
+    for (auto x : local_coordinates)
+    {
+        cout << x << " ";
+
+    }
+
+    return 0;
+}
+
+
+// 2. Now create the same 2 triangles using two different VAOs and VBOs for their data:
+#include <glad/glad.h> // glad must be included before GLFW since glad includes opengl headers that GLFW needs
+#include <GLFW/glfw3.h>
+#include <iostream>
+#include "Shader.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+#include "VertexArray.h"
+#include "VertexBufferLayout.h"
+#include "Texture.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include "Input.h"
+#include "Renderer.h"
+#include "DebugUtils.h"
+#include "Camera.h"
+
+struct AxisValues
+{
+    float x{ 0.0f };
+    float y{ 0.0f };
+    float z{ 0.0f };
+
+    void reset(float reset_value)
+    {
+        x = reset_value;
+        y = reset_value;
+        z = reset_value;
+    }
+};
+
+static constexpr unsigned int  SCREEN_WIDTH{ 16 * 90 };
+static constexpr unsigned int SCREEN_HEIGHT{ 9 * 90 };
+static constexpr float SCREEN_MID_X{ static_cast<float>(SCREEN_WIDTH) / 2.0f };
+static constexpr float SCREEN_MID_Y{ static_cast<float>(SCREEN_HEIGHT) / 2.0f };
+
+static void frame_buffer_size_callback(GLFWwindow* window, int width, int height);
+static void processInput(GLFWwindow* window);
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+static bool to_scale{ false };
+static AxisValues scaling_values{};
+
+static bool to_rotate{ false };
+static AxisValues rotation_values{};
+
+static bool to_translate{ false };
+static AxisValues translation_values{};
+static float last_frame{ 0.0f };
+static float delta_time{ 0.0f };
+
+static bool first_mouse{ false };
+float last_x_pos{ SCREEN_MID_X};
+float last_y_pos{SCREEN_MID_Y};
+//static CameraState camera_state{CameraState::None};
+static Camera camera{};
+int main()
+{
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* window{ glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Learning OpenGL", nullptr, nullptr) };
+
+    if (!window)
+    {
+        std::cerr << "Failed to create GLFW window\n";
+        glfwTerminate();
+        return -1;
+    }
+
+    glfwMakeContextCurrent(window);
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cerr << "Failed to initialize GLAD\n";
+        glfwTerminate();
+        return -1;
+    }
+
+    std::cout << glGetString(GL_VERSION) << std::endl;
+
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(DebugUtils::OpenGLMessageCallback, nullptr);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable(GL_DEPTH_TEST);
+
+    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    glfwSetFramebufferSizeCallback(window, frame_buffer_size_callback);
+    // HIDE THE MOUSE CURSOR AND DONT LET THE USERS CURSOR EXIT THE WINDOW, LIKE AN FPS
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    //glfwSetCursorPosCallback(window, mouse_callback);
+    //glfwSetMouseButtonCallback(window, mouse_button_callback);;
+    glfwSetScrollCallback(window, scroll_callback);
+
+    Shader shader_program{ "Resources/Basic.shader" };
+    shader_program.Bind();
+
+    VertexArray va{};
+
+    float vertices[]{
+        // back face
+        0.5f, 0.5f, 0.5f,      1.0f, 1.0f, // top right
+        0.5f, -0.5f, 0.5f,     1.0f, 0.0f, // bottom right
+        -0.5f, -0.5f, 0.5f,    0.0f, 0.0f, // bottom left
+        -0.5f, 0.5f, 0.5f,     0.0f, 1.0f, // top left
+
+        // front face
+        0.5f, 0.5f, -0.5f,      0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,     0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,    1.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f,     1.0f, 1.0f,
+
+        // top face
+        0.5f, 0.5f, -0.5,      1.0f, 1.0f,
+        0.5f, 0.5f, 0.5,      1.0f, 0.0f,
+        -0.5f, 0.5f, 0.5,      0.0f, 0.0f,
+        -0.5f, 0.5f, -0.5,      0.0f, 1.0f,
+
+        //bottom face
+        0.5f, -0.5f, 0.5,      1.0f, 1.0f,
+        0.5f, -0.5f, -0.5,      1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5,      0.0f, 0.0f,
+        -0.5f, -0.5f, 0.5,      0.0f, 1.0f,
+
+        //right face
+        0.5f, 0.5, -0.5,     1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,     1.0f, 0.0f,
+        0.5f, -0.5f, 0.5f,      0.0f, 0.0f,
+        0.5f, 0.5f, 0.5f,       0.0f, 1.0f,
+
+        //left face
+        -0.5f, 0.5, 0.5,     1.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f,     1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,      0.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f,       0.0f, 1.0f,
+    };
+
+    unsigned int indices[]{
+        0, 1, 3,
+        1, 2, 3,
+
+        4, 5, 7,
+        5, 6, 7,
+
+        8, 9, 11,
+        9, 10, 11,
+
+        12, 13, 15,
+        13, 14, 15,
+
+        16, 17, 19,
+        17, 18, 19,
+
+        20, 21, 23,
+        21, 22, 23
+    };
+    
+    VertexBuffer vb{ vertices, sizeof(vertices) };
+    IndexBuffer ib{ indices, 36 };
+    Texture tx1("Assets/ground.jpg", Texture::Format::JPG, 0);
+    
+    // BIND VERTEX ARRAY FIRST then add attributes
+    VertexBufferLayout layout{};
+    layout.AddAttribute<float>(3);
+    //layout.AddAttribute<float>(3);
+    layout.AddAttribute<float>(2);
+    va.AddBufferLayout(vb, layout);
+
+    Renderer renderer;
+
+    // object1
+    glm::mat4 model(1.0f);
+
+    shader_program.SetUniform1i("texture1", tx1.GetSlot());
+
+    glm::mat4 view(1.0f);
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, 0.3f));
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT), 0.1f, 100.0f);
+
+    shader_program.SetUniformMat4f("projection", projection);
+    while (!glfwWindowShouldClose(window))
+    {
+        float current_frame = static_cast<float>(glfwGetTime());
+        delta_time = current_frame - last_frame;
+        last_frame = current_frame;
+        
+        processInput(window);
+        renderer.Clear(1.0f, 1.0f, 1.0f, 0.0f);
+
+        view = camera.GetViewMatrix();
+        shader_program.SetUniformMat4f("view", view);
+
+        glm::vec3 translation_x(1.02f, 0.0f, 0.0f);
+        glm::vec3 translation_z(-4.0f, -1.0f, -9.02f);
+
+        shader_program.SetUniformMat4f("model", model);
+        renderer.DrawElements(va, ib, shader_program);
+
+        float yval = 0.0f;
+        for (int i = 0; i < 7; ++i)
+        {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, translation_z);
+            for (int j = 0; j < 7; ++j)
+            {
+                model = glm::translate(model, translation_x);
+                shader_program.SetUniformMat4f("model", model);
+                renderer.DrawElements(va, ib, shader_program);
+            }
+
+            translation_z.z += 1.02f;
+        }
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    glfwTerminate();
+
+    return 0;
+}
+
+static void frame_buffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+static void processInput(GLFWwindow* window)
+{    
+    if (Input::IsKeyPressed(window, Key::Escape))
+    {
+        glfwSetWindowShouldClose(window, true);
+        return;
+    }
+
+    Camera::State last_camera_state{ camera.GetState() };
+    camera.ProcessMouseButtonPress(Input::IsMouseButtonPressed(window, Mouse::LeftClick), Input::IsMouseButtonPressed(window, Mouse::RightClick));
+    Camera::State camera_state{ camera.GetState() };
+
+    if (camera_state != last_camera_state)
+    {
+        if (camera_state == Camera::State::Rotating || camera_state == Camera::State::Walking || camera_state == Camera::State::Panning)
+        {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+        else
+        {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+    }
+
+    auto [mouse_x_pos, mouse_y_pos] {Input::GetMouseCoordinates(window)};
+    camera.ProcessMouseMovement(mouse_x_pos, mouse_y_pos, delta_time);
+
+    if (Input::IsKeyPressed(window, Key::Space))
+    {
+        camera.LevelOrientation();
+    }
+}
+
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    float z_offset = static_cast<float>(yoffset) * 400.0f;
+    camera.Walk(0.0f, z_offset, delta_time);
+}
+
+// phong shading in world space
+// doesnt matter, but most prefer to do it in view space bc view is always at position 0 0 0
+/*
+// vertex shader program
+#shader vertex
+#version 460 core
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec2 texture_coordinates_in;
+layout(location = 2) in vec3 normal_in;
+
+uniform mat4 model;
+uniform mat4 mvp;
+//out vec4 vertexColor;
+out vec2 texture_coordinates;
+out vec3 fragment_position;
+out vec3 normal;
+
+void main()
+{
+	gl_Position = mvp * vec4(position, 1.0);
+	texture_coordinates = vec2(texture_coordinates_in.x, texture_coordinates_in.y);
+	fragment_position = vec3(model * vec4(position, 1.0));
+	normal = mat3(transpose(inverse(model))) * normal_in;
+};
+
+#shader fragment
+#version 460 core
+
+in vec2 texture_coordinates;
+in vec3 normal;
+in vec3 fragment_position;
+
+out vec4 FragColor;
+
+uniform sampler2D texture_1;
+uniform vec3 object_color;
+uniform vec3 light_color;
+uniform vec3 light_position;
+uniform vec3 view_position;
+
+void main()
+{	
+	float ambient_strength = 0.1;
+	vec3 ambient_light = ambient_strength * light_color;
+
+	vec3 object_to_light_direction = normalize(light_position - fragment_position);
+	vec3 object_normal = normalize(normal);
+
+	float diffuse_strength = max(dot(object_normal, object_to_light_direction), 0.0);
+	vec3 diffuse_light = diffuse_strength * light_color;
+
+	float specular_strength = 0.5;
+	vec3 object_to_view_direction = normalize(view_position - fragment_position);
+	vec3 light_reflection = reflect(-object_to_light_direction, normal);
+	float spec = pow(max(dot(object_to_view_direction, light_reflection), 0.0), 32);
+	vec3 specular_light = specular_strength * spec * light_color;
+
+	vec3 result = (ambient_light + diffuse_light + specular_light) * object_color;// vec3(texture(texture_1, texture_coordinates).xyz);
+	FragColor = vec4(result, 1.0);
+};
+
+*/
+
+
+
+
+
+
+// 2. Now create the same 2 triangles using two different VAOs and VBOs for their data:
+#include <glad/glad.h> // glad must be included before GLFW since glad includes opengl headers that GLFW needs
+#include <GLFW/glfw3.h>
+#include <iostream>
+#include "Shader.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+#include "VertexArray.h"
+#include "VertexBufferLayout.h"
+#include "Texture.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include "Input.h"
+#include "Renderer.h"
+#include "DebugUtils.h"
+#include "Camera.h"
+#include "Editor.h"
+
+static constexpr unsigned int  SCREEN_WIDTH{ 16 * 90 };
+static constexpr unsigned int SCREEN_HEIGHT{ 9 * 90 };
+static constexpr float SCREEN_MID_X{ static_cast<float>(SCREEN_WIDTH) / 2.0f };
+static constexpr float SCREEN_MID_Y{ static_cast<float>(SCREEN_HEIGHT) / 2.0f };
+constexpr char GLSL_version[]{ "#version 460" };
+
+static bool first_mouse{ true };
+float last_x_pos{ SCREEN_MID_X };
+float last_y_pos{ SCREEN_MID_Y };
+static float last_frame{ 0.0f };
+static float delta_time{ 0.0f };
+
+static void frame_buffer_size_callback(GLFWwindow* window, int width, int height);
+static void processInput(GLFWwindow* window);
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+static void rotate(glm::mat4& model, const Rotation& rotation);
+
+static Camera camera{ Transform{glm::vec3 {0.0f}, Rotation{0.0f, -90.0f, 0.0f}, glm::vec3 {0.0f, 0.0f, 3.0f}} };
+static Editor editor{};
+
+int main()
+{
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* window{ glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Learning OpenGL", nullptr, nullptr) };
+
+    if (!window)
+    {
+        std::cerr << "Failed to create GLFW window\n";
+        glfwTerminate();
+        return -1;
+    }
+
+    glfwMakeContextCurrent(window);
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cerr << "Failed to initialize GLAD\n";
+        glfwTerminate();
+        return -1;
+    }
+
+    std::cout << glGetString(GL_VERSION) << std::endl;
+
+    editor.Init(window, GLSL_version);
+
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(DebugUtils::OpenGLMessageCallback, nullptr);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    glfwSetFramebufferSizeCallback(window, frame_buffer_size_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetScrollCallback(window, scroll_callback);
+
+    Shader lighting_shader{"Resources/lighting.shader"};
+    Shader light_source_shader{ "Resources/light_source.shader" };
+
+    float vertices[]{
+        // back face
+        //position             // texture_coords        // normal
+        0.5f, 0.5f, 0.5f,          1.0f, 1.0f,          0.0f, 0.0f, 1.0f,                                       // top right
+        0.5f, -0.5f, 0.5f,         1.0f, 0.0f,          0.0f, 0.0f, 1.0f,                       // bottom right
+        -0.5f, -0.5f, 0.5f,        0.0f, 0.0f,          0.0f, 0.0f, 1.0f,                 // bottom left
+        -0.5f, 0.5f, 0.5f,         0.0f, 1.0f,          0.0f, 0.0f, 1.0f,                 // top left
+
+        // front face
+        0.5f, 0.5f, -0.5f,         0.0f, 1.0f,          0.0f, 0.0f, -1.0f,
+        0.5f, -0.5f, -0.5f,        0.0f, 0.0f,          0.0f, 0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,       1.0f, 0.0f,          0.0f, 0.0f, -1.0f,
+        -0.5f, 0.5f, -0.5f,        1.0f, 1.0f,          0.0f, 0.0f, -1.0f,
+
+        // top face
+        0.5f, 0.5f, -0.5,          1.0f, 1.0f,          0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5,           1.0f, 0.0f,          0.0f, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0.5,          0.0f, 0.0f,          0.0f, 1.0f, 0.0f,
+        -0.5f, 0.5f, -0.5,         0.0f, 1.0f,          0.0f, 1.0f, 0.0f,
+
+        //bottom face
+        0.5f, -0.5f, 0.5,          1.0f, 1.0f,          0.0f, -1.0f, 0.0f,
+        0.5f, -0.5f, -0.5,         1.0f, 0.0f,          0.0f, -1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5,        0.0f, 0.0f,          0.0f, -1.0f, 0.0f,
+        -0.5f, -0.5f, 0.5,         0.0f, 1.0f,          0.0f, -1.0f, 0.0f,
+
+        //right face
+        0.5f, 0.5, -0.5,           1.0f, 1.0f,          1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,        1.0f, 0.0f,          1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.5f,         0.0f, 0.0f,          1.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, 0.5f,          0.0f, 1.0f,          1.0f, 0.0f, 0.0f,
+
+        //left face
+        -0.5f, 0.5, 0.5,           1.0f, 1.0f,          -1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f,        1.0f, 0.0f,          -1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,       0.0f, 0.0f,          -1.0f, 0.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f,        0.0f, 1.0f,          -1.0f, 0.0f, 0.0f
+    };
+
+    unsigned int indices[]{
+        0, 1, 3,
+        1, 2, 3,
+
+        4, 5, 7,
+        5, 6, 7,
+
+        8, 9, 11,
+        9, 10, 11,
+
+        12, 13, 15,
+        13, 14, 15,
+
+        16, 17, 19,
+        17, 18, 19,
+
+        20, 21, 23,
+        21, 22, 23
+    };
+
+    VertexArray object_va{};
+    VertexBuffer vb{ vertices, sizeof(vertices) };
+    IndexBuffer ib{ indices, 36 };
+    Texture diffuse_map("Assets/container2.png", Texture::Format::PNG, 0);
+    Texture specular_map("Assets/container2_specular.png", Texture::Format::PNG, 1);
+    Texture emission_map("Assets/matrix.jpg", Texture::Format::JPG, 2);
+    VertexBufferLayout layout{};
+    layout.AddAttribute<float>(3);
+    layout.AddAttribute<float>(2);
+    layout.AddAttribute<float>(3);
+    object_va.AddBufferLayout(vb, layout);
+
+    VertexArray point_light_va{};
+    point_light_va.AddBufferLayout(vb, layout);
+
+    Renderer renderer{};
+
+    glm::mat4 view{ 1.0f };
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT), 0.1f, 100.0f);
+
+    // object
+    // glm::vec3 object_color{ 1.0f, 0.5f, 0.31f };  dont need this rn since were giving it textures
+
+    ///////////////////////////////////////////////////////////////////////////// LIGHTS ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    glm::vec3 light_specular{ 1.0f }; // a lights specular component should have full intensity
+
+    //////////////////////////////////////////////////// DIRECTIONAL LIGHT ////////////////////////////////////////////////////////////////////
+    
+    float directional_light_brightness{ 1.0f };
+    glm::vec3 directional_light_color{ 1.0f, 1.0f, 1.0f };
+    glm::vec3 directional_light_direction{ -0.2f, -1.0f, -0.3f };
+    glm::vec3 directional_light_diffuse_color = directional_light_color * glm::vec3(0.5f);
+    glm::vec3 directional_light_ambient_color = directional_light_color * glm::vec3(0.2f);
+    
+
+    //////////////////////////////////////////////////// POINT LIGHT ////////////////////////////////////////////////////////////////////
+
+    float point_light_brightness{ 5.0f };
+    glm::vec3 point_light_color{ 1.0f, 0.0f, 0.0f };
+    //glm::vec3 point_light_position{ 0.2f, 1.0f, 0.3f };
+    glm::vec3 point_light_diffuse_color = point_light_color * glm::vec3(0.5f);
+    glm::vec3 point_light_ambient_color = point_light_color * glm::vec3(0.2f);
+    float point_light_constant{ 1.0f };
+    float point_light_linear{ 0.09f };
+    float point_light_quadratic{ 0.032f };
+    bool point_light_is_on{ true };
+
+    glm::mat4 point_light_model{ 1.0f };
+    Transform point_light_transform{ glm::vec3{1.0f, 1.0f, 1.0f}, Rotation{}, glm::vec3{1.2f, 1.0f, 2.0f} };
+    point_light_model = glm::translate(point_light_model, point_light_transform.GetTranslation());
+    rotate(point_light_model, point_light_transform.GetRotation());
+    point_light_model = glm::scale(point_light_model, point_light_transform.GetScale());
+    glm::mat4 point_light_mvp{ projection * view * point_light_model };
+
+    //////////////////////////////////////////////////// SPOT LIGHT ////////////////////////////////////////////////////////////////////
+
+    float spot_light_brightness{ 5.0f };
+    glm::vec3 spot_light_color{ 1.0f, 1.0f, 1.0f };
+    glm::vec3 spot_light_diffuse_color = spot_light_color * glm::vec3(0.5f);
+    glm::vec3 spot_light_ambient_color = spot_light_color * glm::vec3(0.2f);
+    float spot_light_constant{ 1.0f };
+    float spot_light_linear{ 0.09f };
+    float spot_light_quadratic{ 0.032f };
+    float spot_light_cutoff{ 12.5f };
+    float outer_spot_light_cutoff{ 15.0f };
+    bool spot_light_is_on{ true };
+
+    //////////////////////////////////////////////////// OBJECT ////////////////////////////////////////////////////////////////////
+
+    glm::mat4 object_model{ 1.0f };
+    glm::mat4 object_mvp{};
+
+    Transform objects_transforms[3];
+    objects_transforms[0].SetTranslation(glm::vec3{ 0.0f, 0.0f, 0.0f });
+    objects_transforms[1].SetTranslation(glm::vec3{ 2.0f, 0.0f, 0.0f });
+    objects_transforms[2].SetTranslation(glm::vec3{ 4.0f, 0.0f, 0.0f });
+
+    object_va.Bind();
+    lighting_shader.Bind();
+    lighting_shader.SetUniform1i("material.diffuse", diffuse_map.GetSlot());
+    lighting_shader.SetUniform1i("material.specular", specular_map.GetSlot());
+    lighting_shader.SetUniform1i("material.emission", emission_map.GetSlot());
+    lighting_shader.SetUniform1f("material.shininess", 64.0f);
+
+    // DIRECTIONAL
+    lighting_shader.SetUniform1f("directional_light.brightness", directional_light_brightness);
+    lighting_shader.SetUniformVec3f("directional_light.direction", directional_light_direction);
+    lighting_shader.SetUniformVec3f("directional_light.ambient", directional_light_ambient_color);
+    lighting_shader.SetUniformVec3f("directional_light.diffuse", directional_light_diffuse_color);
+    lighting_shader.SetUniformVec3f("directional_light.specular", light_specular);
+
+    // POINT
+    lighting_shader.SetUniform1f("point_light.brightness", point_light_brightness);
+    lighting_shader.SetUniform1f("point_light.constant", point_light_constant);
+    lighting_shader.SetUniform1f("point_light.linear_", point_light_linear);
+    lighting_shader.SetUniform1f("point_light.quadratic", point_light_quadratic);
+    lighting_shader.SetUniformVec3f("point_light.position", point_light_transform.GetTranslation());
+    lighting_shader.SetUniformVec3f("point_light.ambient", point_light_ambient_color);
+    lighting_shader.SetUniformVec3f("point_light.diffuse", point_light_diffuse_color);
+    lighting_shader.SetUniformVec3f("point_light.specular", light_specular);
+
+    // SPOT
+    lighting_shader.SetUniform1f("spot_light.brightness", spot_light_brightness);
+    lighting_shader.SetUniformVec3f("spot_light.position", camera.GetPosition());
+    lighting_shader.SetUniformVec3f("spot_light.direction", camera.GetForward());
+    lighting_shader.SetUniformVec3f("spot_light.ambient", spot_light_ambient_color);
+    lighting_shader.SetUniformVec3f("spot_light.diffuse", spot_light_diffuse_color);
+    lighting_shader.SetUniformVec3f("spot_light.specular", light_specular);
+    lighting_shader.SetUniform1f("spot_light.constant", spot_light_constant);
+    lighting_shader.SetUniform1f("spot_light.linear_", spot_light_linear);
+    lighting_shader.SetUniform1f("spot_light.quadratic", spot_light_quadratic);
+    lighting_shader.SetUniform1f("spot_light.cutoff", glm::cos(glm::radians(spot_light_cutoff)));
+    lighting_shader.SetUniform1f("spot_light.outer_cutoff", glm::cos(glm::radians(outer_spot_light_cutoff)));
+    
+    
+    // this normal is used to adjust the normals if the model changes due to something like scaling.
+    glm::mat3 normal_matrix{};
+    
+    diffuse_map.Bind();
+    specular_map.Bind();
+    emission_map.Bind();
+    while (!glfwWindowShouldClose(window))
+    {
+        float current_frame = static_cast<float>(glfwGetTime());
+        delta_time = current_frame - last_frame;
+        last_frame = current_frame;
+        processInput(window);
+        renderer.Clear(1.0f, 1.0f, 1.0f, 0.0f);
+        
+        view = camera.GetViewMatrix();
+
+        point_light_model = glm::mat4(1.0f);
+        point_light_model = glm::translate(point_light_model, point_light_transform.GetTranslation());
+        rotate(point_light_model, point_light_transform.GetRotation());
+        point_light_model = glm::scale(point_light_model, point_light_transform.GetScale());
+        point_light_mvp = projection * view * point_light_model;
+        point_light_diffuse_color = point_light_color * glm::vec3(0.5f);
+        point_light_ambient_color = point_light_color * glm::vec3(0.2f);
+
+        spot_light_diffuse_color = spot_light_color * glm::vec3(0.5f);
+        spot_light_ambient_color = spot_light_color * glm::vec3(0.2f);
+
+        light_source_shader.Bind();
+        //point_light_va.Bind();
+        light_source_shader.SetUniformMat4f("mvp", point_light_mvp);
+        light_source_shader.SetUniformVec3f("light_color", point_light_color);        
+        renderer.DrawElements(point_light_va, ib, light_source_shader);
+
+
+        lighting_shader.Bind();
+
+        if (point_light_is_on)
+        {
+            lighting_shader.SetUniform1f("point_light.brightness", point_light_brightness);
+        }
+        else
+        {
+            lighting_shader.SetUniform1f("point_light.brightness", 0.0f);
+        }
+        lighting_shader.SetUniformVec3f("point_light.diffuse", point_light_diffuse_color);
+        lighting_shader.SetUniformVec3f("point_light.ambient", point_light_ambient_color);
+        lighting_shader.SetUniformVec3f("point_light.position", point_light_transform.GetTranslation());
+
+        lighting_shader.SetUniformVec3f("spot_light.position", camera.GetPosition());
+        if (spot_light_is_on)
+        {
+            lighting_shader.SetUniform1f("spot_light.brightness", spot_light_brightness);
+        }
+        else
+        {
+            lighting_shader.SetUniform1f("spot_light.brightness", 0.0f);
+        }
+        lighting_shader.SetUniformVec3f("spot_light.direction", camera.GetForward());
+        lighting_shader.SetUniformVec3f("spot_light.diffuse", spot_light_diffuse_color);
+        lighting_shader.SetUniformVec3f("spot_light.ambient", spot_light_ambient_color);
+
+        for (size_t i{ 0 }; i < 3; ++i)
+        {
+            object_model = glm::mat4(1.0f);
+            object_model = glm::translate(object_model, objects_transforms[i].GetTranslation());
+            rotate(object_model, objects_transforms[i].GetRotation());
+            object_model = glm::scale(object_model, objects_transforms[i].GetScale());
+            object_mvp = projection * view * object_model;
+
+            lighting_shader.SetUniformMat4f("model", object_model);
+            lighting_shader.SetUniformMat4f("mvp", object_mvp);
+            lighting_shader.SetUniformVec3f("view_position", camera.GetPosition());
+
+            renderer.DrawElements(object_va, ib, lighting_shader);
+        }
+
+        editor.BeginRender();
+        editor.CreateTransformMenu("Light Cube", point_light_transform);
+        editor.CreateTransformMenu("Object 1", objects_transforms[0]);
+        editor.CreateTransformMenu("Object 2", objects_transforms[1]);
+        editor.CreateTransformMenu("Object 3", objects_transforms[2]);
+        editor.CreateLightMenu("Point Light", point_light_brightness, point_light_color, point_light_is_on);
+        editor.CreateLightMenu("Spot Light", spot_light_brightness, spot_light_color, spot_light_is_on);
+
+        editor.EndRender();
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    editor.Shutdown();
+    glfwTerminate();
+    
+
+
+    return 0;
+}
+
+static void frame_buffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+static void processInput(GLFWwindow* window)
+{    
+    if (Input::IsKeyPressed(window, Key::Escape))
+    {
+        glfwSetWindowShouldClose(window, true);
+        return;
+    }
+
+    if (!editor.MouseIsOnEditor())
+    {
+        Camera::State last_camera_state{ camera.GetState() };
+        camera.ProcessMouseButtonPress(Input::IsMouseButtonPressed(window, Mouse::LeftClick), Input::IsMouseButtonPressed(window, Mouse::RightClick));
+        Camera::State camera_state{ camera.GetState() };
+
+        if (camera_state != last_camera_state)
+        {
+            if (camera_state == Camera::State::Rotating || camera_state == Camera::State::Walking || camera_state == Camera::State::Panning)
+            {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            }
+            else
+            {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            }
+        }
+
+        auto [mouse_x_pos, mouse_y_pos] {Input::GetMouseCoordinates(window)};
+        camera.ProcessMouseMovement(mouse_x_pos, mouse_y_pos, delta_time);
+    }
+
+    if (Input::IsKeyPressed(window, Key::Space))
+    {
+        camera.LevelOrientation();
+    }
+}
+
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    if (!editor.MouseIsOnEditor())
+    {
+        float z_offset = static_cast<float>(yoffset) * 400.0f;
+        camera.Walk(0.0f, z_offset, delta_time);
+    }
+}
+
+void rotate(glm::mat4& model, const Rotation& rotation)
+{
+    model = glm::rotate(model, glm::radians(rotation.yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(rotation.pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(rotation.roll), glm::vec3(0.0f, 0.0f, 1.0f));
+}
+
+#pragma once
+/*#include <glm/glm.hpp>
+#include <vector>
+#include "IndexBuffer.h"
+#include "VertexArray.h"
+#include "VertexBuffer.h"
+#include "Shader.h"
+#include "VertexBufferLayout.h"
+#include "Vertex.h"
+#include "Texture.h"
+
+class Mesh
+{
+private:
+	std::vector<Vertex> m_vertices;
+	std::vector<uint32_t> m_indices;
+	std::vector<Texture> m_textures;
+	VertexArray m_VAO;
+	VertexBuffer m_VBO;
+	IndexBuffer m_IBO;
+	VertexBufferLayout m_buffer_layout{};
+
+private:
+	void Setup();
+
+public:
+	Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, std::vector<Texture> textures);
+	void Draw(Shader& shader);
+
+public:
+};
+*/
+#pragma once
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <glad/glad.h>
+#include <string>
+#include <vector>
+#include "Shader.h"
+#include "VertexArray.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+#include "Vertex.h"
+#include "Texture.h"
+
+using namespace std;
+
+struct MeshTexture {
+    enum class Type : uint8_t
+    {
+        Diffuse,
+        Specular,
+        Normal,
+        Height,
+        Roughness
+    };
+
+    unsigned int id;
+    string path;
+    string type;
+    Type texture_type;
+};
+
+class Mesh {
+public:
+    // mesh Data
+    vector<Vertex>       m_vertices;
+    vector<uint32_t> m_indices;
+    vector<Texture>  m_textures;
+    VertexArray m_VAO;
+
+    // constructor
+    Mesh(vector<Vertex> vertices, vector<uint32_t> indices, vector<Texture> textures) :
+        m_vertices{ vertices }, m_indices{ indices }, m_textures{ textures },
+        m_VAO{}, m_VBO{ &vertices[0], vertices.size() * sizeof(Vertex) }, m_IBO{ &indices[0], m_indices.size() }
+    {
+
+        // now that we have all the required data, set the vertex buffers and its attribute pointers.
+        Setup();
+    }
+
+    // render the mesh
+    void Draw(Shader& shader)
+    {
+        // bind appropriate textures
+        uint32_t diffuse_texture_num{ 1 };
+        uint32_t specular_texture_num{ 1 };
+        uint32_t normal_texture_num{ 1 };
+        uint32_t height_texture_num{ 1 };
+        uint32_t roughness_texture_num{ 1 };
+
+        for (size_t i{ 0 }; i < m_textures.size(); ++i)
+        {
+            glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
+            // retrieve texture number (the N in diffuse_textureN)
+            string texture_uniform_name;
+            MeshTexture::Type type;
+
+            switch (m_textures[i].texture_type)
+            {
+            case MeshTexture::Type::Diffuse:
+                texture_uniform_name = "texture_diffuse" + std::to_string(diffuse_texture_num++);
+                break;
+
+            case MeshTexture::Type::Specular:
+                texture_uniform_name = "texture_specular" + std::to_string(specular_texture_num++);
+                break;
+
+            case MeshTexture::Type::Normal:
+                texture_uniform_name = "texture_normal" + std::to_string(normal_texture_num++);
+                break;
+
+            case MeshTexture::Type::Height:
+                texture_uniform_name = "texture_height" + std::to_string(height_texture_num++);
+                break;
+
+            case MeshTexture::Type::Roughness:
+                texture_uniform_name = "texture_roughness" + std::to_string(roughness_texture_num++);
+                break;
+
+            default:
+                break;
+            }
+
+            shader.SetUniform1i(texture_uniform_name.c_str(), i);
+            glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
+        }
+
+        // draw mesh
+        m_VAO.Bind();
+        glDrawElements(GL_TRIANGLES, static_cast<uint32_t>(m_indices.size()), GL_UNSIGNED_INT, 0);
+        m_VAO.Unbind();
+
+        // always good practice to set everything back to defaults once configured.
+        glActiveTexture(GL_TEXTURE0);
+    }
+
+private:
+    // render data 
+    VertexBuffer m_VBO;
+    IndexBuffer m_IBO;
+
+    // initializes all the buffer objects/arrays
+    void Setup()
+    {
+        m_VAO.AddBufferLayoutMeshVertex(m_VBO);
+        m_VAO.Unbind();
+    }
+};
+
+#pragma once
+/*
+#include <vector>
+#include <string>
+#include "Texture.h"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include "Mesh.h"
+
+class Model
+{
+public:
+	Model(const char* path);
+	void Draw(class Shader& shader);
+
+private:
+	std::vector<Mesh> m_meshes;
+	std::string m_directory;
+
+private:
+	void LoadModel(const char* path);
+	void ProcessNode(aiNode* node, const aiScene* scene);
+	Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
+	std::vector<class Texture> LoadMaterialTextures(const aiMaterial* material, aiTextureType type, Texture::Type texture_type);
+
+};
+*/
+#pragma once
+#include <glad/glad.h> 
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <stb_image.h>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <map>
+#include <vector>
+#include "Mesh.h"
+
+using namespace std;
+
+unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
+
+class Model
+{
+public:
+    // model data 
+    vector<MeshTexture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
+    vector<Mesh>    meshes;
+    string directory;
+    bool gammaCorrection;
+
+    // constructor, expects a filepath to a 3D model.
+    Model(string const& path, bool gamma = false) : gammaCorrection(gamma)
+    {
+        loadModel(path);
+    }
+
+    // draws the model, and thus all its meshes
+    void Draw(Shader& shader)
+    {
+        for (unsigned int i = 0; i < meshes.size(); i++)
+            meshes[i].Draw(shader);
+    }
+
+private:
+    // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
+    void loadModel(string const& path)
+    {
+        // read file via ASSIMP
+        Assimp::Importer importer;
+        const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+        // check for errors
+        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
+        {
+            cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << endl;
+            return;
+        }
+        // retrieve the directory path of the filepath
+        directory = path.substr(0, path.find_last_of('/'));
+
+        // process ASSIMP's root node recursively
+        processNode(scene->mRootNode, scene);
+    }
+
+    // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
+    void processNode(aiNode* node, const aiScene* scene)
+    {
+        // process each mesh located at the current node
+        for (unsigned int i = 0; i < node->mNumMeshes; i++)
+        {
+            // the node object only contains indices to index the actual objects in the scene. 
+            // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
+            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+            meshes.push_back(processMesh(mesh, scene));
+        }
+        // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
+        for (unsigned int i = 0; i < node->mNumChildren; i++)
+        {
+            processNode(node->mChildren[i], scene);
+        }
+
+    }
+
+    Mesh processMesh(aiMesh* mesh, const aiScene* scene)
+    {
+        // data to fill
+        vector<Vertex> vertices;
+        vector<unsigned int> indices;
+        vector<MeshTexture> textures;
+
+        // walk through each of the mesh's vertices
+        for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+        {
+            Vertex vertex;
+            glm::vec3 vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
+            // positions
+            vector.x = mesh->mVertices[i].x;
+            vector.y = mesh->mVertices[i].y;
+            vector.z = mesh->mVertices[i].z;
+            vertex.position = vector;
+            // normals
+            if (mesh->HasNormals())
+            {
+                vector.x = mesh->mNormals[i].x;
+                vector.y = mesh->mNormals[i].y;
+                vector.z = mesh->mNormals[i].z;
+                vertex.normal = vector;
+            }
+            // texture coordinates
+            if (mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
+            {
+                glm::vec2 vec;
+                // a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
+                // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
+                vec.x = mesh->mTextureCoords[0][i].x;
+                vec.y = mesh->mTextureCoords[0][i].y;
+                vertex.texture_coordinates = vec;
+                // tangent
+                vector.x = mesh->mTangents[i].x;
+                vector.y = mesh->mTangents[i].y;
+                vector.z = mesh->mTangents[i].z;
+                vertex.tangent = vector;
+                // bitangent
+                vector.x = mesh->mBitangents[i].x;
+                vector.y = mesh->mBitangents[i].y;
+                vector.z = mesh->mBitangents[i].z;
+                vertex.bitangent = vector;
+            }
+            else
+                vertex.texture_coordinates = glm::vec2(0.0f, 0.0f);
+
+            vertices.push_back(vertex);
+        }
+        // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
+        for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+        {
+            aiFace face = mesh->mFaces[i];
+            // retrieve all indices of the face and store them in the indices vector
+            for (unsigned int j = 0; j < face.mNumIndices; j++)
+                indices.push_back(face.mIndices[j]);
+        }
+        // process materials
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
+        // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
+        // Same applies to other texture as the following list summarizes:
+        // diffuse: texture_diffuseN
+        // specular: texture_specularN
+        // normal: texture_normalN
+
+        // 1. diffuse maps
+        vector<MeshTexture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", MeshTexture::Type::Diffuse);
+        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+        // 2. specular maps
+        vector<MeshTexture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", MeshTexture::Type::Specular);
+        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+        // 3. normal maps
+        std::vector<MeshTexture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal", MeshTexture::Type::Normal);
+        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+        // 4. height maps
+        std::vector<MeshTexture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height", MeshTexture::Type::Height);
+        textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+
+        // 4. height maps
+        std::vector<MeshTexture> roughnessMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE_ROUGHNESS , "texture_roughness", MeshTexture::Type::Roughness);
+        textures.insert(textures.end(), roughnessMaps.begin(), roughnessMaps.end());
+
+        // return a mesh object created from the extracted mesh data
+        return Mesh(vertices, indices, textures);
+    }
+
+    // checks all material textures of a given type and loads the textures if they're not loaded yet.
+    // the required info is returned as a Texture struct.
+    vector<MeshTexture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName, MeshTexture::Type texture_type)
+    {
+        vector<MeshTexture> textures;
+        for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
+        {
+            aiString str;
+            mat->GetTexture(type, i, &str);
+            // check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
+            bool skip = false;
+            for (unsigned int j = 0; j < textures_loaded.size(); j++)
+            {
+                if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)
+                {
+                    textures.push_back(textures_loaded[j]);
+                    skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
+                    break;
+                }
+            }
+            if (!skip)
+            {   // if texture hasn't been loaded already, load it
+                MeshTexture texture;
+                texture.id = TextureFromFile(str.C_Str(), this->directory);
+                texture.type = typeName;
+                texture.texture_type = texture_type;
+                texture.path = str.C_Str();
+                textures.push_back(texture);
+                textures_loaded.push_back(texture);  // store it as texture loaded for entire model, to ensure we won't unnecesery load duplicate textures.
+            }
+        }
+        return textures;
+    }
+};
+
+
+unsigned int TextureFromFile(const char* path, const string& directory, bool gamma)
+{
+    string filename = string(path);
+    filename = directory + '/' + filename;
+
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    int width, height, nrComponents;
+    unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+    if (data)
+    {
+        GLenum format;
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else if (nrComponents == 4)
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
+
+    return textureID;
+}
