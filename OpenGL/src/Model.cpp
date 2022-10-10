@@ -1,119 +1,166 @@
-/*#include "Model.h"
-#include "Mesh.h"
-#include "Texture.h"
-#include "Vertex.h"
+#include "Model.h"
 
-Model::Model(const char* path) :
-	m_directory{}
+#include <iostream>
+#include <glad/glad.h> 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include "Renderer.h"
+
+Model::Model(std::string const& path, bool gamma) :
+    m_meshes{}, m_directory{}, m_gamma_correction{ gamma }
 {
-	LoadModel(path);
+    LoadModel(path);
 }
 
-void Model::Draw(Shader& shader)
+void Model::Draw(Renderer& renderer, Shader& shader)
 {
-	for (std::size_t i{ 0 }; i < m_meshes.size(); ++i)
-		m_meshes[i].Draw(shader);
+    for (size_t i{ 0 }; i < m_meshes.size(); ++i)
+        renderer.DrawMesh(m_meshes[i], shader);
 }
 
-void Model::LoadModel(const char* path)
+void Model::LoadModel(std::string const& path)
 {
-	Assimp::Importer importer;
-	// aiProcess_Triangulate: A postprocessing option that allows assimp to transform its primitive shapes to triangles if it isn't completely made of triangles.
-	// 
-	const aiScene* scene{ importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs) };
+    Assimp::Importer importer;
+    const aiScene* scene{ importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace) };
 
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-	{
-		std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
-		return;
-	}
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
+    {
+        std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
+        return;
+    }
 
-	m_directory = std::string(path).substr(0, std::string(path).find_last_of('/'));
+    m_directory = path.substr(0, path.find_last_of('/'));
 
-	ProcessNode(scene->mRootNode, scene);
-
+    ProcessNode(scene->mRootNode, scene);
 }
 
 void Model::ProcessNode(aiNode* node, const aiScene* scene)
 {
-	for (std::size_t i{ 0 }; i < node->mNumMeshes; ++i)
-	{
-		aiMesh* mesh{ scene->mMeshes[node->mMeshes[i]] }; // retreive the mesh index from the node, then retrieve the mesh from the scene with the mesh index
-		m_meshes.push_back(ProcessMesh(mesh, scene));
-	}
-	
-	for (std::size_t i{ 0 }; i < node->mNumChildren; ++i)
-	{
-		ProcessNode(node->mChildren[i], scene);
-	}
+    for (size_t i{ 0 }; i < node->mNumMeshes; ++i)
+    {
+        aiMesh* mesh{ scene->mMeshes[node->mMeshes[i]] };
+        m_meshes.push_back(ProcessMesh(mesh, scene));
+    }
+
+    for (size_t i{ 0 }; i < node->mNumChildren; ++i)
+    {
+        ProcessNode(node->mChildren[i], scene);
+    }
+
 }
 
 Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 {
-	std::vector<Vertex> vertices{};
-	vertices.reserve(mesh->mNumVertices);
+    std::vector<Vertex> vertices{};
+    vertices.reserve(mesh->mNumVertices);
+    std::vector<std::uint32_t> indices{};
+    std::vector<Texture> textures{};
 
-	std::vector<uint32_t> indices{};
-	std::vector<Texture> textures{};
+    for (size_t i{ 0 }; i < mesh->mNumVertices; ++i)
+    {
+        glm::vec3 position{};
+        glm::vec3 normal{};
+        glm::vec2 texture_coordinates{};
+        glm::vec3 tangent{};
+        glm::vec3 bitangent{};
 
-	glm::vec3 position{};
-	glm::vec3 normal{};
-	glm::vec2 texture_coordinates{0.0f, 0.0f};
+        position.x = mesh->mVertices[i].x;
+        position.y = mesh->mVertices[i].y;
+        position.z = mesh->mVertices[i].z;
 
-	for (std::size_t i{ 0 }; i < mesh->mNumVertices; ++i)
-	{
-		position.x = mesh->mVertices[i].x;
-		position.y = mesh->mVertices[i].y;
-		position.z = mesh->mVertices[i].z;
-		
-		normal.x = mesh->mNormals[i].x;
-		normal.y = mesh->mNormals[i].y;
-		normal.z = mesh->mNormals[i].z;
+        if (mesh->HasNormals())
+        {
+            normal.x = mesh->mNormals[i].x;
+            normal.y = mesh->mNormals[i].y;
+            normal.z = mesh->mNormals[i].z;
+        }
 
-		if (mesh->mTextureCoords[0])
-		{
-			texture_coordinates.x = mesh->mTextureCoords[0][i].x;
-			texture_coordinates.y = mesh->mTextureCoords[0][i].y;
-		}
+        // texture coordinates
+        if (mesh->mTextureCoords[0])
+        {
+            texture_coordinates.x = mesh->mTextureCoords[0][i].x;
+            texture_coordinates.y = mesh->mTextureCoords[0][i].y;
 
-		vertices.emplace_back(Vertex{ position, normal, texture_coordinates });
-	}
+            // tangent
+            tangent.x = mesh->mTangents[i].x;
+            tangent.y = mesh->mTangents[i].y;
+            tangent.z = mesh->mTangents[i].z;
 
-	for (std::size_t i{ 0 }; i < mesh->mNumFaces; ++i)
-	{
-		const aiFace face{ mesh->mFaces[i] };
-		for (std::size_t j{ 0 }; j < face.mNumIndices; ++j)
-			indices.push_back(face.mIndices[j]);
-	}
+            // bitangent
+            bitangent.x = mesh->mBitangents[i].x;
+            bitangent.y = mesh->mBitangents[i].y;
+            bitangent.z = mesh->mBitangents[i].z;
+        }
+        else
+        {
+            texture_coordinates = glm::vec2(0.0f, 0.0f);
+        }
 
-	if (mesh->mMaterialIndex >= 0)
-	{
-		const aiMaterial* material{ scene->mMaterials[mesh->mMaterialIndex] };
-		
-		std::vector<Texture> diffuseMaps{ LoadMaterialTextures(material, aiTextureType_DIFFUSE, Texture::Type::Diffuse) };
-		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-		
-		std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, Texture::Type::Specular);
-		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-	}
+        vertices.emplace_back(position, normal, texture_coordinates, tangent, bitangent);
+    }
 
-	return Mesh{ vertices, indices, textures };
+    for (std::size_t i{ 0 }; i < mesh->mNumFaces; ++i)
+    {
+        aiFace face{ mesh->mFaces[i] };
+
+        for (size_t j{ 0 }; j < face.mNumIndices; ++j)
+            indices.push_back(face.mIndices[j]);
+    }
+
+    aiMaterial* material{ scene->mMaterials[mesh->mMaterialIndex] };
+
+    size_t total_texture_count{ material->GetTextureCount(aiTextureType_DIFFUSE) *
+        material->GetTextureCount(aiTextureType_SPECULAR) *
+        material->GetTextureCount(aiTextureType_HEIGHT) *
+        material->GetTextureCount(aiTextureType_AMBIENT) *
+        material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS)
+    };
+
+    textures.reserve(total_texture_count);
+
+    std::vector<Texture> diffuse_maps{ LoadMaterialTextures(material, aiTextureType_DIFFUSE, Texture::Type::Diffuse) };
+    textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
+
+    std::vector<Texture> specular_maps{ LoadMaterialTextures(material, aiTextureType_SPECULAR, Texture::Type::Specular) };
+    textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
+
+    std::vector<Texture> normal_maps{ LoadMaterialTextures(material, aiTextureType_HEIGHT, Texture::Type::Normal) };
+    textures.insert(textures.end(), normal_maps.begin(), normal_maps.end());
+
+    std::vector<Texture> height_maps{ LoadMaterialTextures(material, aiTextureType_AMBIENT, Texture::Type::Height) };
+    textures.insert(textures.end(), height_maps.begin(), height_maps.end());
+
+    std::vector<Texture> roughness_maps{ LoadMaterialTextures(material, aiTextureType_DIFFUSE_ROUGHNESS , Texture::Type::Roughness) };
+    textures.insert(textures.end(), roughness_maps.begin(), roughness_maps.end());
+
+    return Mesh(vertices, indices, textures);
 }
 
-std::vector<Texture> Model::LoadMaterialTextures(const aiMaterial* material, aiTextureType type, Texture::Type texture_type)
+std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* material, aiTextureType type, Texture::Type texture_type)
 {
-	std::vector<Texture> textures{};
-	textures.reserve(material->GetTextureCount(type));
+    std::vector<Texture> textures{};
+    textures.reserve(material->GetTextureCount(type));
 
-	for (uint32_t i{ 0 }; i < material->GetTextureCount(type); ++i)
-	{
-		aiString str;
-		material->GetTexture(type, i, &str);
-		std::string texture_file_path{ m_directory + '/' + std::string(str.C_Str()) };
+    for (size_t i{ 0 }; i < material->GetTextureCount(type); ++i)
+    {
+        aiString file_name_ai;
+        material->GetTexture(type, i, &file_name_ai);
+        std::string file_name{ std::string(file_name_ai.C_Str()) };
 
-		textures.emplace_back(texture_file_path.c_str(), true, texture_type);
-	}
+        bool found{ (m_loaded_textures_file_names.find(file_name) != m_loaded_textures_file_names.end()) };
 
-	return textures;
+        if (m_loaded_textures_file_names.empty() || !found)
+        {
+            std::string file_path{ m_directory + '/' + file_name };
+            textures.emplace_back(file_path.c_str(), true, texture_type, file_name);
+            m_loaded_textures_file_names.insert(file_name);
+        }
+    }
+
+    return textures;
 }
-*/
+
+const std::vector<Mesh>* Model::GetMeshes() const
+{
+    return &m_meshes;
+}

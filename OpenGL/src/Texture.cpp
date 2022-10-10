@@ -2,14 +2,14 @@
 #include <glad/glad.h>
 #include <iostream>
 
-Texture::Texture(const char *file_path, bool flip_vertically_on_load, Type type, std::string path)
-	: m_ID{}, m_buffer{ nullptr }, m_width{}, m_height{}, m_color_channels{}, m_type{ type }, m_path{ path }
+Texture::Texture(const char *file_path, bool flip_vertically_on_load, Type type, std::string file_name)
+	: m_ID{}, m_buffer{ nullptr }, m_width{}, m_height{}, m_color_channels{}, m_type{ type }, m_file_name{ file_name }
 {
 	this->Load(file_path);
 }
 
 Texture::Texture(const Texture& texture) :
-	m_ID{texture.m_ID}, m_buffer{texture.m_buffer}, m_width{texture.m_width}, m_height{texture.m_height}, m_type{texture.m_type}, m_path{texture.m_path}
+	m_ID{texture.m_ID}, m_buffer{texture.m_buffer}, m_width{texture.m_width}, m_height{texture.m_height}, m_type{texture.m_type}, m_file_name{texture.m_file_name}
 {
 }
 
@@ -83,7 +83,7 @@ Texture::Type Texture::GetType() const
 	return m_type;
 }
 
-std::string Texture::GetPath() const
+std::string Texture::GetFileName() const
 {
-	return m_path;
+	return m_file_name;
 }

@@ -323,7 +323,8 @@ int main()
         model_model = glm::scale(model_model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
         model_mvp = projection * view * model_model;
         model_shader.SetUniformMat4f("mvp", model_mvp);
-        ourModel.Draw(model_shader);
+        renderer.DrawModel(ourModel, model_shader);
+        //ourModel.Draw(model_shader);
         /*
         editor.BeginRender();
         editor.CreateTransformMenu("Light Cube", point_light_transform);
