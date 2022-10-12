@@ -156,6 +156,13 @@ void Editor::CreateBackgroundMenu(const char* title, glm::vec3& color, bool& sho
     ImGui::End();
 }
 
+void Editor::CreateTextInput(const char* title, char path[])
+{
+    ImGui::Begin(title);
+    ImGui::InputText(title, path, 50);
+    ImGui::End();
+}
+
 bool Editor::MouseIsOnEditor()
 {
     return ImGui::GetIO().WantCaptureMouse;

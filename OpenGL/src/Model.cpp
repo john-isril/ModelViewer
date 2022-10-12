@@ -201,3 +201,9 @@ Transform& Model::GetTransform()
 {
     return m_transform;
 }
+
+void Model::LoadNewModel(std::string const& path)
+{
+    m_meshes.clear();
+    this->LoadModel(path);
+}

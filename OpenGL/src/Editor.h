@@ -26,6 +26,7 @@ public:
 	static void CreateLightMenu(const char* title, float& brightness, glm::vec3& color, bool &is_on);
 	static void CreateFiltersMenu(const char* title, Shader &shader, int &filter_type, float &vignette_intensity, float &blur_intensity, float time);
 	static void CreateBackgroundMenu(const char* title, glm::vec3& color, bool& show_skybox);
+	static void CreateTextInput(const char* title, char path[]);
 	static bool MouseIsOnEditor();
 
 private:

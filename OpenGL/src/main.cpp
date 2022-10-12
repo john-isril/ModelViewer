@@ -20,6 +20,8 @@
 #include "FrameBuffer.h"
 #include "FilterType.h"
 #include "Skybox.h"
+#include <stdio.h>
+#include <string.h>
 
 static constexpr unsigned int  SCREEN_WIDTH{ 16 * 90 };
 static constexpr unsigned int SCREEN_HEIGHT{ 9 * 90 };
@@ -220,8 +222,10 @@ int main()
     Skybox skybox{ cubemap_file_paths };
 
     //////////////////////////////////////////////////////////////////////// 3D MODEL ///////////////////////////////////////////////////////////////
+    
     Model model_3D("Assets/backpack/backpack.obj");
-
+    char path[]{"Assets/backpack/backpack.obj"};
+    char prev_path[]{ "Assets/backpack/backpack.obj" };
     glm::mat4 model_model{ 1.0f };
     glm::mat4 model_mvp{};
 
@@ -305,6 +309,12 @@ int main()
         model_shader.SetUniformVec3f("point_light.position", point_light_transform.GetTranslation());
         model_shader.SetUniform1f("material.shininess", 64.0f);
 
+        if (strcmp(path, prev_path))
+        {
+            model_3D.LoadNewModel(std::string(path));
+            strcpy_s(prev_path, path);
+        }
+
         model_model = glm::mat4(1.0f);
         model_model = glm::translate(model_model, model_3D.GetTransform().GetTranslation());
         rotate(model_model, model_3D.GetTransform().GetRotation());
@@ -329,6 +339,7 @@ int main()
         editor.CreateTransformMenu("Light Cube", point_light_transform);
         editor.CreateLightMenu("Point Light", point_light_brightness, point_light_color, point_light_is_on);
         editor.CreateFiltersMenu("Filters", postprocessing_shader, filter_type, vignette_intensity, blur_intensity, glfwGetTime());
+        editor.CreateTextInput("3D Model File Path", path);
         editor.CreateBackgroundMenu("Background", background_color, show_skybox);
         editor.EndRender();
         glfwSwapBuffers(window); 

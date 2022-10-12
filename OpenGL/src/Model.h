@@ -25,9 +25,9 @@ public:
 public:
     Model(std::string const& path, bool gamma = false);
     Model(Transform transform, std::string const& path, bool gamma = false);
-
     const std::vector<Mesh>* GetMeshes() const;
     Transform& GetTransform();
+    void LoadNewModel(std::string const& path);
 
 private:
     std::unordered_set<std::string> m_loaded_textures_file_names;
