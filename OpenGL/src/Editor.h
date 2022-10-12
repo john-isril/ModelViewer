@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Transform.h"
+#include "Shader.h"
 
 class Editor
 {
@@ -23,6 +24,8 @@ public:
 
 	static void CreateTransformMenu(const char* title, Transform &transform);
 	static void CreateLightMenu(const char* title, float& brightness, glm::vec3& color, bool &is_on);
+	static void CreateFiltersMenu(const char* title, Shader &shader, int &filter_type, float &vignette_intensity, float &blur_intensity, float time);
+	static void CreateBackgroundMenu(const char* title, glm::vec3& color, bool& show_skybox);
 	static bool MouseIsOnEditor();
 
 private:

@@ -43,13 +43,11 @@ private:
     float last_mouse_y_pos;
     bool first_mouse;
 
-    //glm::vec3 m_position;
     Transform m_transform;
     glm::vec3 m_forward;
     glm::vec3 m_up;
     glm::vec3 m_right;
     glm::vec3 m_world_up;
-    //Rotation m_rotation;
 
 private:
     void UpdateVectors();

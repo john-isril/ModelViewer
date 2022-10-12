@@ -52,40 +52,43 @@ void Renderer::DrawMesh(const Mesh& mesh, Shader &shader)
     for (size_t i{ 0 }; i < textures->size(); ++i)
     {
         glActiveTexture(GL_TEXTURE0 + i);
-        char texture_uniform_name[]{ "texture_XXXXXXXXXXX" };
+        char diffuse_texture_uniform_name[]{ "material.diffuse0" };
+        char specular_texture_uniform_name[]{ "material.specular0" };
+        char normal_texture_uniform_name[]{ "material.normal0" };
+        char height_texture_uniform_name[]{ "material.height0" };
+        char roughness_texture_uniform_name[]{ "material.roughness0" };
 
         switch ((*textures)[i].GetType())
         {
         case Texture::Type::Diffuse:
-            texture_uniform_name[15] = '0' + diffuse_texture_num++;
-            texture_uniform_name[16] = '\0';
+            diffuse_texture_uniform_name[16] = '0' + diffuse_texture_num++;
+            shader.SetUniform1i(diffuse_texture_uniform_name, i);
             break;
 
         case Texture::Type::Specular:
-            texture_uniform_name[16] = '0' + specular_texture_num++;
-            texture_uniform_name[17] = '\0';
+            specular_texture_uniform_name[17] = '0' + specular_texture_num++;
+            shader.SetUniform1i(specular_texture_uniform_name, i);
             break;
 
         case Texture::Type::Normal:
-            texture_uniform_name[14] = '0' + normal_texture_num++;
-            texture_uniform_name[15] = '\0';
+            normal_texture_uniform_name[15] = '0' + normal_texture_num++;
+            shader.SetUniform1i(normal_texture_uniform_name, i);
             break;
 
         case Texture::Type::Height:
-            texture_uniform_name[14] = '0' + height_texture_num++;
-            texture_uniform_name[15] = '\0';
+            height_texture_uniform_name[15] = '0' + height_texture_num++;
+            shader.SetUniform1i(height_texture_uniform_name, i);
             break;
 
         case Texture::Type::Roughness:
-            texture_uniform_name[17] = '0' + roughness_texture_num++;
-            texture_uniform_name[18] = '\0';
+            roughness_texture_uniform_name[18] = '0' + roughness_texture_num++;
+            shader.SetUniform1i(roughness_texture_uniform_name, i);
             break;
 
         default:
             break;
         }
 
-        shader.SetUniform1i(texture_uniform_name, i);
         (*textures)[i].Bind();
     }
 
@@ -101,4 +104,17 @@ void Renderer::DrawModel(const Model& model, Shader& shader)
 
     for (size_t i{ 0 }; i < meshes->size(); ++i)
         DrawMesh((*meshes)[i], shader);
+}
+
+void Renderer::DrawSkybox(Skybox& skybox, const glm::mat4& view, const glm::mat4& projection, Shader& shader)
+{
+    glDepthFunc(GL_LEQUAL);
+    shader.Bind();
+    const glm::mat4 skybox_view = glm::mat4(glm::mat3(view));
+    shader.SetUniformMat4f("view", skybox_view);
+    shader.SetUniformMat4f("projection", projection);
+    skybox.Activate();
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    skybox.Deactivate();
+    glDepthFunc(GL_LESS);
 }

@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
-
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include "Skybox.h"
 class Renderer
 {
 private:
@@ -19,4 +21,5 @@ public:
 	static void DrawElements(const class VertexArray& va, const class IndexBuffer& ib, const class Shader& shader);
 	static void DrawMesh(const class Mesh& mesh, Shader& shader);
 	static void DrawModel(const class Model& model, Shader& shader);
+	static void DrawSkybox(Skybox &skybox, const glm::mat4& view, const glm::mat4& projection, Shader& shader);
 };

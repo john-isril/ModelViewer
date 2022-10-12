@@ -84,6 +84,12 @@
     <ClCompile Include="src\Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\FrameBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Skybox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\IndexBuffer.h">
@@ -609,6 +615,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FrameBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FilterType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Skybox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1330,8 +1345,10 @@
     </None>
     <None Include="Resources\lighting.shader" />
     <None Include="Resources\light_source.shader" />
-    <None Include="Resources\model_loader.shader" />
+    <None Include="Resources\model.shader" />
     <None Include="assimp-vc143-mt.dll" />
+    <None Include="Resources\postprocessing.shader" />
+    <None Include="Resources\skybox.shader" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="src\h.txt" />

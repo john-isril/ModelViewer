@@ -24,6 +24,8 @@ public:
 	void SetUniformMat4f(const char* name, const glm::mat4& value);
 	void SetUniformMat3f(const char* name, const glm::mat4& value);
 	void SetUniformVec3f(const char* name, const glm::vec3& value);
+	void SetUniformbool(const char* name, bool value);
+
 	// todo add more func overloads
 
 private:

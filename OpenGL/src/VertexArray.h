@@ -1,5 +1,4 @@
-#ifndef VERTEX_ARRAY_H
-#define VERTEX_ARRAY_H
+#pragma once
 #include <cstdint>
 
 class VertexArray
@@ -16,4 +15,3 @@ private:
 	uint32_t m_ID;
 	uint32_t stride;
 };
-#endif // !VERTEX_ARRAY_H

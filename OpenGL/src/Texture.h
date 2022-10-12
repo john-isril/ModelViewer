@@ -18,17 +18,23 @@ public:
 		Specular,
 		Normal,
 		Height,
-		Roughness
+		Roughness,
+		CubeMap
 	};
+
+	static constexpr uint8_t NUM_OF_CUBE_FACES{ 6 };
 
 public:
 	Texture(const char* file_path, bool flip_vertically_on_load, Type type, std::string file_name);
 	Texture(const Texture& texture);
+	Texture(const char *file_paths[]);
+
 	~Texture();
 
 	void Bind() const;
 	void Unbind() const;
-	void Load(const char* file_path);
+	void Load(const char* file_path, bool flip_vertically_on_load);
+	void LoadCubeMap(const char* file_paths[]);
 
 	uint32_t GetID() const;
 	Texture::Type GetType()  const;

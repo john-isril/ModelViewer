@@ -165,8 +165,10 @@
     <ClCompile Include="Dependencies\glad\src\glad.c" />
     <ClCompile Include="Dependencies\glm\glm\detail\glm.cpp" />
     <ClCompile Include="Dependencies\stb_image\stb_image.cpp" />
+    <ClCompile Include="src\Skybox.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Editor.cpp" />
+    <ClCompile Include="src\FrameBuffer.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -338,9 +340,12 @@
     <ClInclude Include="Dependencies\glm\glm\vec4.hpp" />
     <ClInclude Include="Dependencies\glm\glm\vector_relational.hpp" />
     <ClInclude Include="Dependencies\stb_image\stb_image.h" />
+    <ClInclude Include="src\Skybox.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\DebugUtils.h" />
     <ClInclude Include="src\Editor.h" />
+    <ClInclude Include="src\FilterType.h" />
+    <ClInclude Include="src\FrameBuffer.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\KeyCodes.h" />
@@ -853,7 +858,9 @@
     <None Include="Dependencies\glm\glm\gtx\wrap.inl" />
     <None Include="Resources\lighting.shader" />
     <None Include="Resources\light_source.shader" />
-    <None Include="Resources\model_loader.shader" />
+    <None Include="Resources\model.shader" />
+    <None Include="Resources\postprocessing.shader" />
+    <None Include="Resources\skybox.shader" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="src\h.txt" />

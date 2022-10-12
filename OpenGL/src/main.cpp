@@ -1,4 +1,4 @@
-#include <glad/glad.h> // glad must be included before GLFW since glad includes opengl headers that GLFW needs
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include "Shader.h"
@@ -17,6 +17,9 @@
 #include "Camera.h"
 #include "Editor.h"
 #include "Model.h"
+#include "FrameBuffer.h"
+#include "FilterType.h"
+#include "Skybox.h"
 
 static constexpr unsigned int  SCREEN_WIDTH{ 16 * 90 };
 static constexpr unsigned int SCREEN_HEIGHT{ 9 * 90 };
@@ -45,8 +48,8 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    GLFWwindow* window{ glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Learning OpenGL", nullptr, nullptr) };
+    glfwWindowHint(GLFW_SAMPLES, 4);
+    GLFWwindow* window{ glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "3D Model Viewer", nullptr, nullptr) };
 
     if (!window)
     {
@@ -64,29 +67,32 @@ int main()
         return -1;
     }
 
-    stbi_set_flip_vertically_on_load(true);
-
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     editor.Init(window, GLSL_version);
 
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glEnable(GL_MULTISAMPLE);
     glDebugMessageCallback(DebugUtils::OpenGLMessageCallback, nullptr);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_DEPTH_TEST);
     glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     glfwSetFramebufferSizeCallback(window, frame_buffer_size_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetScrollCallback(window, scroll_callback);
 
-    Shader lighting_shader{ "Resources/lighting.shader" };
     Shader light_source_shader{ "Resources/light_source.shader" };
-    Shader model_shader{ "Resources/model_loader.shader" };
+    Shader model_shader{ "Resources/model.shader" };
+    Shader postprocessing_shader{ "Resources/postprocessing.shader" };
+    Shader skybox_shader{ "Resources/skybox.shader" };
 
-    float vertices[]{
+    ////////////////////////////////////////////////////////////////////////////////////////// LIGHTBOX/POINT LIGHT ///////////////////////////////////////////////////////////////////////////////////////
+    glm::vec3 light_specular{ 1.0f };
+
+    float light_box_vertices[]
+    {
         // back face
         //position             // texture_coords        // normal
         0.5f, 0.5f, 0.5f,          1.0f, 1.0f,          0.0f, 0.0f, 1.0f,                                       // top right
@@ -125,7 +131,8 @@ int main()
         -0.5f, 0.5f, -0.5f,        0.0f, 1.0f,          -1.0f, 0.0f, 0.0f
     };
 
-    unsigned int indices[]{
+    unsigned int light_box_indices[]
+    {
         0, 1, 3,
         1, 2, 3,
 
@@ -145,11 +152,8 @@ int main()
         21, 22, 23
     };
 
-    VertexBuffer vb{ vertices, sizeof(vertices) };
-    IndexBuffer ib{ indices, 36 };
-    //Texture diffuse_map("Assets/container2.png", true, Texture::Type::None);
-    //Texture specular_map("Assets/container2_specular.png", true, Texture::Type::None);
-    //Texture emission_map("Assets/matrix.jpg", true, Texture::Type::None);
+    VertexBuffer vb{ light_box_vertices, sizeof(light_box_vertices) };
+    IndexBuffer ib{ light_box_indices, 36 };
     VertexBufferLayout layout{};
     layout.AddAttribute<float>(3);
     layout.AddAttribute<float>(2);
@@ -158,32 +162,8 @@ int main()
     VertexArray point_light_va{};
     point_light_va.AddBufferLayout(vb, layout);
 
-    Renderer renderer{};
-
-    glm::mat4 view{ 1.0f };
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT), 0.1f, 100.0f);
-
-    // object
-    // glm::vec3 object_color{ 1.0f, 0.5f, 0.31f };  dont need this rn since were giving it textures
-
-    ///////////////////////////////////////////////////////////////////////////// LIGHTS ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    glm::vec3 light_specular{ 1.0f }; // a lights specular component should have full intensity
-
-    //////////////////////////////////////////////////// DIRECTIONAL LIGHT ////////////////////////////////////////////////////////////////////
-
-    float directional_light_brightness{ 1.0f };
-    glm::vec3 directional_light_color{ 1.0f, 1.0f, 1.0f };
-    glm::vec3 directional_light_direction{ -0.2f, -1.0f, -0.3f };
-    glm::vec3 directional_light_diffuse_color = directional_light_color * glm::vec3(0.5f);
-    glm::vec3 directional_light_ambient_color = directional_light_color * glm::vec3(0.2f);
-
-
-    //////////////////////////////////////////////////// POINT LIGHT ////////////////////////////////////////////////////////////////////
-
     float point_light_brightness{ 5.0f };
-    glm::vec3 point_light_color{ 1.0f, 0.0f, 0.0f };
-    //glm::vec3 point_light_position{ 0.2f, 1.0f, 0.3f };
+    glm::vec3 point_light_color{ 1.0f, 1.0f, 1.0f };
     glm::vec3 point_light_diffuse_color = point_light_color * glm::vec3(0.5f);
     glm::vec3 point_light_ambient_color = point_light_color * glm::vec3(0.2f);
     float point_light_constant{ 1.0f };
@@ -196,83 +176,107 @@ int main()
     point_light_model = glm::translate(point_light_model, point_light_transform.GetTranslation());
     rotate(point_light_model, point_light_transform.GetRotation());
     point_light_model = glm::scale(point_light_model, point_light_transform.GetScale());
-    glm::mat4 point_light_mvp{ projection * view * point_light_model };
+    glm::mat4 point_light_mvp{};
 
-    //////////////////////////////////////////////////// SPOT LIGHT ////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////// DIRECTIONAL LIGHT ////////////////////////////////////////////////////////////////////
 
-    float spot_light_brightness{ 5.0f };
-    glm::vec3 spot_light_color{ 1.0f, 1.0f, 1.0f };
-    glm::vec3 spot_light_diffuse_color = spot_light_color * glm::vec3(0.5f);
-    glm::vec3 spot_light_ambient_color = spot_light_color * glm::vec3(0.2f);
-    float spot_light_constant{ 1.0f };
-    float spot_light_linear{ 0.09f };
-    float spot_light_quadratic{ 0.032f };
-    float spot_light_cutoff{ 12.5f };
-    float outer_spot_light_cutoff{ 15.0f };
-    bool spot_light_is_on{ true };
+    float directional_light_brightness{ 1.0f };
+    glm::vec3 directional_light_color{ 1.0f, 1.0f, 1.0f };
+    glm::vec3 directional_light_direction{ -0.2f, -1.0f, -0.3f };
+    glm::vec3 directional_light_diffuse_color = directional_light_color * glm::vec3(0.5f);
+    glm::vec3 directional_light_ambient_color = directional_light_color * glm::vec3(0.2f);
 
-    //////////////////////////////////////////////////// OBJECT ////////////////////////////////////////////////////////////////////
-    Model ourModel("Assets/backpack/backpack.obj");
+    constexpr uint8_t NUM_OF_SCREEN_QUAD_VERTICES{ 6 };
+
+    ////////////////////////////////////////////////////////// POST PROCESSING SCREEN QUAD /////////////////////////////////////////////////
+    float screen_quad_vertices[] = {
+        // positions   // texture coordinates
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+
+        -1.0f,  1.0f,  0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 1.0f
+    };
+
+    VertexBuffer screen_quad_buffer{ screen_quad_vertices, sizeof(screen_quad_vertices) };
+    VertexBufferLayout screen_quad_layout{};
+    screen_quad_layout.AddAttribute<float>(2);
+    screen_quad_layout.AddAttribute<float>(2);
+    VertexArray screen_quad_VAO{};
+    screen_quad_VAO.AddBufferLayout(screen_quad_buffer, screen_quad_layout);
+
+    //////////////////////////////////////////////////////////////////////// SKYBOX ///////////////////////////////////////////////////////////////
+    const char* cubemap_file_paths[]{
+        "Assets/skybox/right.jpg",
+        "Assets/skybox/left.jpg",
+        "Assets/skybox/top.jpg",
+        "Assets/skybox/bottom.jpg",
+        "Assets/skybox/front.jpg",
+        "Assets/skybox/back.jpg"
+    };
+
+    Skybox skybox{ cubemap_file_paths };
+
+    //////////////////////////////////////////////////////////////////////// 3D MODEL ///////////////////////////////////////////////////////////////
+    Model model_3D("Assets/backpack/backpack.obj");
 
     glm::mat4 model_model{ 1.0f };
     glm::mat4 model_mvp{};
+
+    Renderer renderer{};
+
+    glm::mat4 view{ 1.0f };
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT), 0.1f, 100.0f);
+
+    model_shader.Bind();
     
-    /// ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /*
-    lighting_shader.Bind();
-    lighting_shader.SetUniform1i("material.diffuse", diffuse_map.GetSlot());
-    lighting_shader.SetUniform1i("material.specular", specular_map.GetSlot());
-    lighting_shader.SetUniform1i("material.emission", emission_map.GetSlot());
-    lighting_shader.SetUniform1f("material.shininess", 64.0f);
+    model_shader.SetUniform1f("directional_light.brightness", directional_light_brightness);
+    model_shader.SetUniformVec3f("directional_light.direction", directional_light_direction);
+    model_shader.SetUniformVec3f("directional_light.ambient", directional_light_ambient_color);
+    model_shader.SetUniformVec3f("directional_light.diffuse", directional_light_diffuse_color);
+    model_shader.SetUniformVec3f("directional_light.specular", light_specular);
 
-    // DIRECTIONAL
-    lighting_shader.SetUniform1f("directional_light.brightness", directional_light_brightness);
-    lighting_shader.SetUniformVec3f("directional_light.direction", directional_light_direction);
-    lighting_shader.SetUniformVec3f("directional_light.ambient", directional_light_ambient_color);
-    lighting_shader.SetUniformVec3f("directional_light.diffuse", directional_light_diffuse_color);
-    lighting_shader.SetUniformVec3f("directional_light.specular", light_specular);
+    
+    model_shader.SetUniform1f("point_light.brightness", point_light_brightness);
+    model_shader.SetUniform1f("point_light.constant", point_light_constant);
+    model_shader.SetUniform1f("point_light.linear_", point_light_linear);
+    model_shader.SetUniform1f("point_light.quadratic", point_light_quadratic);
+    model_shader.SetUniformVec3f("point_light.position", point_light_transform.GetTranslation());
+    model_shader.SetUniformVec3f("point_light.ambient", point_light_ambient_color);
+    model_shader.SetUniformVec3f("point_light.diffuse", point_light_diffuse_color);
+    model_shader.SetUniformVec3f("point_light.specular", light_specular);
 
-    // POINT
-    lighting_shader.SetUniform1f("point_light.brightness", point_light_brightness);
-    lighting_shader.SetUniform1f("point_light.constant", point_light_constant);
-    lighting_shader.SetUniform1f("point_light.linear_", point_light_linear);
-    lighting_shader.SetUniform1f("point_light.quadratic", point_light_quadratic);
-    lighting_shader.SetUniformVec3f("point_light.position", point_light_transform.GetTranslation());
-    lighting_shader.SetUniformVec3f("point_light.ambient", point_light_ambient_color);
-    lighting_shader.SetUniformVec3f("point_light.diffuse", point_light_diffuse_color);
-    lighting_shader.SetUniformVec3f("point_light.specular", light_specular);
+    postprocessing_shader.Bind();
+    postprocessing_shader.SetUniform1i("screen_quad_texture", 0);
+    
+    FrameBuffer postprocess_frame_buffer{ SCREEN_WIDTH, SCREEN_HEIGHT };
 
-    // SPOT
-    lighting_shader.SetUniform1f("spot_light.brightness", spot_light_brightness);
-    lighting_shader.SetUniformVec3f("spot_light.position", camera.GetPosition());
-    lighting_shader.SetUniformVec3f("spot_light.direction", camera.GetForward());
-    lighting_shader.SetUniformVec3f("spot_light.ambient", spot_light_ambient_color);
-    lighting_shader.SetUniformVec3f("spot_light.diffuse", spot_light_diffuse_color);
-    lighting_shader.SetUniformVec3f("spot_light.specular", light_specular);
-    lighting_shader.SetUniform1f("spot_light.constant", spot_light_constant);
-    lighting_shader.SetUniform1f("spot_light.linear_", spot_light_linear);
-    lighting_shader.SetUniform1f("spot_light.quadratic", spot_light_quadratic);
-    lighting_shader.SetUniform1f("spot_light.cutoff", glm::cos(glm::radians(spot_light_cutoff)));
-    lighting_shader.SetUniform1f("spot_light.outer_cutoff", glm::cos(glm::radians(outer_spot_light_cutoff)));
+    skybox_shader.Bind();
+    skybox_shader.SetUniform1i("skybox", 0);
 
-    */
-    // this normal is used to adjust the normals if the model changes due to something like scaling.
-    glm::mat3 normal_matrix{};
+    // Would like to use an enum for this, however, GLSL has no support for enums so I'll be using an int instead.
+    // DearIMGui also expects an int when using the radio button feature.
+    int filter_type{0};
+    float vignette_intensity{1.0f};
+    float blur_intensity{ 0.07f };
+    bool show_skybox{ true };
+    glm::vec3 background_color{ 1.0f, 1.0f, 1.0f };
 
-   // diffuse_map.Bind();
-    //specular_map.Bind();
-    //emission_map.Bind();
     while (!glfwWindowShouldClose(window))
     {
         float current_frame = static_cast<float>(glfwGetTime());
         delta_time = current_frame - last_frame;
         last_frame = current_frame;
         processInput(window);
-        renderer.Clear(1.0f, 1.0f, 1.0f, 0.0f);
+
+        postprocess_frame_buffer.Bind();
+        renderer.Clear(background_color.r, background_color.g, background_color.b, 1.0f);
 
         view = camera.GetViewMatrix();
 
-        /*point_light_model = glm::mat4(1.0f);
+        point_light_model = glm::mat4(1.0f);
         point_light_model = glm::translate(point_light_model, point_light_transform.GetTranslation());
         rotate(point_light_model, point_light_transform.GetRotation());
         point_light_model = glm::scale(point_light_model, point_light_transform.GetScale());
@@ -280,67 +284,59 @@ int main()
         point_light_diffuse_color = point_light_color * glm::vec3(0.5f);
         point_light_ambient_color = point_light_color * glm::vec3(0.2f);
 
-        spot_light_diffuse_color = spot_light_color * glm::vec3(0.5f);
-        spot_light_ambient_color = spot_light_color * glm::vec3(0.2f);
-
         light_source_shader.Bind();
-        //point_light_va.Bind();
         light_source_shader.SetUniformMat4f("mvp", point_light_mvp);
         light_source_shader.SetUniformVec3f("light_color", point_light_color);
         renderer.DrawElements(point_light_va, ib, light_source_shader);
 
-
-        lighting_shader.Bind();
+        model_shader.Bind();
 
         if (point_light_is_on)
         {
-            lighting_shader.SetUniform1f("point_light.brightness", point_light_brightness);
+            model_shader.SetUniform1f("point_light.brightness", point_light_brightness);
         }
         else
         {
-            lighting_shader.SetUniform1f("point_light.brightness", 0.0f);
+            model_shader.SetUniform1f("point_light.brightness", 0.0f);
         }
-        lighting_shader.SetUniformVec3f("point_light.diffuse", point_light_diffuse_color);
-        lighting_shader.SetUniformVec3f("point_light.ambient", point_light_ambient_color);
-        lighting_shader.SetUniformVec3f("point_light.position", point_light_transform.GetTranslation());
 
-        lighting_shader.SetUniformVec3f("spot_light.position", camera.GetPosition());
-        if (spot_light_is_on)
-        {
-            lighting_shader.SetUniform1f("spot_light.brightness", spot_light_brightness);
-        }
-        else
-        {
-            lighting_shader.SetUniform1f("spot_light.brightness", 0.0f);
-        }
-        lighting_shader.SetUniformVec3f("spot_light.direction", camera.GetForward());
-        lighting_shader.SetUniformVec3f("spot_light.diffuse", spot_light_diffuse_color);
-        lighting_shader.SetUniformVec3f("spot_light.ambient", spot_light_ambient_color);
-        */
-        model_shader.Bind();
+        model_shader.SetUniformVec3f("point_light.diffuse", point_light_diffuse_color);
+        model_shader.SetUniformVec3f("point_light.ambient", point_light_ambient_color);
+        model_shader.SetUniformVec3f("point_light.position", point_light_transform.GetTranslation());
+        model_shader.SetUniform1f("material.shininess", 64.0f);
+
         model_model = glm::mat4(1.0f);
-        model_model = glm::translate(model_model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model_model = glm::scale(model_model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        model_model = glm::translate(model_model, model_3D.GetTransform().GetTranslation());
+        rotate(model_model, model_3D.GetTransform().GetRotation());
+        model_model = glm::scale(model_model, model_3D.GetTransform().GetScale());
         model_mvp = projection * view * model_model;
         model_shader.SetUniformMat4f("mvp", model_mvp);
-        renderer.DrawModel(ourModel, model_shader);
-        //ourModel.Draw(model_shader);
-        /*
+        renderer.DrawModel(model_3D, model_shader);
+
+        if (show_skybox)
+        {
+            renderer.DrawSkybox(skybox, camera.GetViewMatrix(), projection, skybox_shader);
+        }
+
+        postprocess_frame_buffer.Unbind();
+        postprocessing_shader.Bind();
+        postprocess_frame_buffer.BindTextureColorBuffer();
+        
+        renderer.DrawArrays(screen_quad_VAO, postprocessing_shader, NUM_OF_SCREEN_QUAD_VERTICES);
+
         editor.BeginRender();
+        editor.CreateTransformMenu("3D Model", model_3D.GetTransform());
         editor.CreateTransformMenu("Light Cube", point_light_transform);
         editor.CreateLightMenu("Point Light", point_light_brightness, point_light_color, point_light_is_on);
-        editor.CreateLightMenu("Spot Light", spot_light_brightness, spot_light_color, spot_light_is_on);
-
+        editor.CreateFiltersMenu("Filters", postprocessing_shader, filter_type, vignette_intensity, blur_intensity, glfwGetTime());
+        editor.CreateBackgroundMenu("Background", background_color, show_skybox);
         editor.EndRender();
-        */
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(window); 
         glfwPollEvents();
     }
 
     editor.Shutdown();
     glfwTerminate();
-
-
 
     return 0;
 }

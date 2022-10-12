@@ -5,21 +5,36 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Renderer.h"
+#include "Transform.h"
 
 Model::Model(std::string const& path, bool gamma) :
-    m_meshes{}, m_directory{}, m_gamma_correction{ gamma }
+    m_meshes{}, m_directory{}, m_gamma_correction{ gamma },
+    m_transform{}, m_type{Type::OBJ}
 {
     LoadModel(path);
 }
 
-void Model::Draw(Renderer& renderer, Shader& shader)
+Model::Model(Transform transform, std::string const& path, bool gamma) :
+    m_transform{ transform }, m_meshes{}, m_directory{}, m_gamma_correction{ gamma }
 {
-    for (size_t i{ 0 }; i < m_meshes.size(); ++i)
-        renderer.DrawMesh(m_meshes[i], shader);
+    LoadModel(path);
 }
 
 void Model::LoadModel(std::string const& path)
 {
+    if (path.find("fbx") != std::string::npos)
+    {
+        m_type = Type::FBX;
+    }
+    else if (path.find("obj") != std::string::npos)
+    {
+        m_type = Type::OBJ;
+    }
+    else if (path.find("gltf") != std::string::npos)
+    {
+        m_type = Type::GLTF;
+    }
+
     Assimp::Importer importer;
     const aiScene* scene{ importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace) };
 
@@ -152,7 +167,24 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* material, aiTexture
         if (m_loaded_textures_file_names.empty() || !found)
         {
             std::string file_path{ m_directory + '/' + file_name };
-            textures.emplace_back(file_path.c_str(), true, texture_type, file_name);
+            switch (m_type)
+            {
+            case Type::FBX:
+                textures.emplace_back(file_path.c_str(), true, texture_type, file_name);
+                break;
+                
+            case Type::OBJ:
+                textures.emplace_back(file_path.c_str(), true, texture_type, file_name);
+                break;
+
+            case Type::GLTF:
+                textures.emplace_back(file_path.c_str(), false, texture_type, file_name);
+                break;
+
+            default:
+                textures.emplace_back(file_path.c_str(), true, texture_type, file_name);
+                break;
+            }
             m_loaded_textures_file_names.insert(file_name);
         }
     }
@@ -163,4 +195,9 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* material, aiTexture
 const std::vector<Mesh>* Model::GetMeshes() const
 {
     return &m_meshes;
+}
+
+Transform& Model::GetTransform()
+{
+    return m_transform;
 }

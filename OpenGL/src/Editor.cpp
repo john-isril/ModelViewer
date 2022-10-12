@@ -2,9 +2,11 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "imgui_stdlib.h"
 
-
-Editor::Editor() {}
+Editor::Editor()
+{
+}
 
 Editor::~Editor()
 {
@@ -62,7 +64,7 @@ void Editor::BeginRender()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     //ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
-    bool show_demo_window = true;
+    //bool show_demo_window = false;
     //ImGui::ShowDemoWindow(&show_demo_window);
 }
 
@@ -119,9 +121,37 @@ void Editor::CreateLightMenu(const char* title, float& brightness, glm::vec3 & c
     ImGui::Begin(title);
     if (ImGui::Button("Toggle"))
     {
-        is_on = (is_on) ? false : true;
+        is_on = 1 - is_on;
     }
     ImGui::DragFloat("Brightness", &brightness, 0.1f, 0.0f, 100.0f);
+    ImGui::ColorEdit3("Color", (float*)&color);
+    ImGui::End();
+}
+
+void Editor::CreateFiltersMenu(const char* title, Shader& shader, int& filter_type, float& vignette_intensity, float& blur_intensity, float time)
+{
+    ImGui::Begin(title);
+    ImGui::RadioButton("Normal", &filter_type, 0);
+    ImGui::RadioButton("Inverted", &filter_type, 1);
+    ImGui::RadioButton("Greyscale", &filter_type, 2);
+    ImGui::RadioButton("Vignette", &filter_type, 3);
+    ImGui::DragFloat("Vignette Intensity", &vignette_intensity, 0.1f, 0.0f, 2.0f);
+    ImGui::RadioButton("Blur Sweep", &filter_type, 4);
+    ImGui::DragFloat("Blur Intensity", &blur_intensity, 0.001f, 0.0f, 0.07f);
+    ImGui::End();
+    shader.SetUniform1i("filter_type", filter_type);
+    shader.SetUniform1f("vignette_intensity", vignette_intensity);
+    shader.SetUniform1f("time", time);
+    shader.SetUniform1f("blur_intensity", blur_intensity);
+}
+
+void Editor::CreateBackgroundMenu(const char* title, glm::vec3& color, bool& show_skybox)
+{
+    ImGui::Begin(title);
+    if (ImGui::Button("Show Skybox"))
+    {
+        show_skybox = 1 - show_skybox;
+    }
     ImGui::ColorEdit3("Color", (float*)&color);
     ImGui::End();
 }
