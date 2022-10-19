@@ -44,7 +44,7 @@ int32_t Shader::GetUniformLocation(const char* name)
 
     if (found_uniform == -1)
     {
-        std::cerr << "ERROR: " << name << " UNIFORM NOT FOUND!\n";
+        //std::cerr << "ERROR: " << name << " UNIFORM NOT FOUND!\n";
         return -1;
     }
 
