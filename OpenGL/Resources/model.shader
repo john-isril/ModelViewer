@@ -97,14 +97,10 @@ void main()
 
 	vec3 object_normal = normalize(normal);
 	vec3 object_to_view_direction = normalize(view_position - fragment_position);
-	vec3 emission_light = texture(material.emission, texture_coordinates).rgb * 3;
-
 
 	vec3 result = vec3(0.0, 0.0, 0.0);
 	result += CalcDirectionalLight(directional_light, object_normal, object_to_view_direction);
 	result += CalcPointLight(point_light, object_normal, fragment_position, object_to_view_direction);
-
-	//result += emission_light;
 
 	FragColor = vec4(result, 1.0);
 };
@@ -140,11 +136,10 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragment_position, vec3 
 	vec3 light_reflection_direction = reflect(-object_to_light_direction, normal);
 	float specular_strength = pow(max(dot(view_direction, light_reflection_direction), 0.0), material.shininess);
 
+	vec3 specular_light = specular_strength * light.specular * vec3(texture(material.specular1, texture_coordinates));
+
 	float distance = length(light.position - fragment_position);
 	float attenuation = 1.0 / (light.constant + light.linear_ * distance + light.quadratic * (distance * distance));
-
-	specular_strength *= pow(max(dot(view_direction, light_reflection_direction), 0.0), material.shininess);
-	vec3 specular_light = specular_strength * light.specular * vec3(texture(material.specular1, texture_coordinates));
 
 	return (light.brightness * attenuation * (ambient_light + diffuse_light + specular_light));
 }

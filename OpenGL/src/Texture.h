@@ -7,11 +7,6 @@
 class Texture
 {
 public:
-	enum class Format : uint8_t
-	{
-		JPG, PNG, None
-	};
-
 	enum class Type : uint8_t
 	{
 		Diffuse,
@@ -19,7 +14,9 @@ public:
 		Normal,
 		Height,
 		Roughness,
-		CubeMap
+		CubeMap,
+
+		None
 	};
 
 	static constexpr uint8_t NUM_OF_CUBE_FACES{ 6 };

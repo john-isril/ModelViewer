@@ -307,7 +307,7 @@ int main()
         model_shader.SetUniformVec3f("point_light.diffuse", point_light_diffuse_color);
         model_shader.SetUniformVec3f("point_light.ambient", point_light_ambient_color);
         model_shader.SetUniformVec3f("point_light.position", point_light_transform.GetTranslation());
-        model_shader.SetUniform1f("material.shininess", 64.0f);
+        model_shader.SetUniform1f("material.shininess", 16.0f);
 
         if (strcmp(path, prev_path))
         {
@@ -321,6 +321,8 @@ int main()
         model_model = glm::scale(model_model, model_3D.GetTransform().GetScale());
         model_mvp = projection * view * model_model;
         model_shader.SetUniformMat4f("mvp", model_mvp);
+        model_shader.SetUniformVec3f("view_position", camera.GetPosition());
+
         renderer.DrawModel(model_3D, model_shader);
 
         if (show_skybox)

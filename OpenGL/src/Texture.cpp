@@ -52,7 +52,7 @@ void Texture::Load(const char* file_path, bool flip_vertically_on_load)
 {
 	glGenTextures(1, &m_ID);
 
-	stbi_set_flip_vertically_on_load(flip_vertically_on_load);
+	stbi_set_flip_vertically_on_load(true);
 
 	m_buffer = stbi_load(file_path, &m_width, &m_height, &m_color_channels, 0);
 	if (m_buffer)

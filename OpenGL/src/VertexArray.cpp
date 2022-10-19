@@ -2,7 +2,7 @@
 #include <glad/glad.h>
 #include "VertexBufferLayout.h"
 #include "VertexBuffer.h"
-#include "Vertex.h"
+#include "Mesh.h"
 
 VertexArray::VertexArray()
 	: m_ID {}, stride {}

@@ -6,10 +6,12 @@
 class VertexBuffer
 {
 public:
-	VertexBuffer(const void* data, unsigned int size);
+	VertexBuffer();
+	VertexBuffer(const void* data, uint32_t size);
 	~VertexBuffer();
 	void Bind() const;
 	void Unbind() const;
+	void BindBufferData(const void* data, uint32_t size);
 
 private:
 	unsigned int m_ID;

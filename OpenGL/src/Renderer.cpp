@@ -91,11 +91,12 @@ void Renderer::DrawMesh(const Mesh& mesh, Shader &shader)
 
         (*textures)[i].Bind();
     }
+    
+    glActiveTexture(GL_TEXTURE0);
 
     mesh.Bind();
     glDrawElements(GL_TRIANGLES, static_cast<uint32_t>(mesh.GetIndices()->size()), GL_UNSIGNED_INT, 0);
     mesh.Unbind();
-    glActiveTexture(GL_TEXTURE0);
 }
 
 void Renderer::DrawModel(const Model& model, Shader& shader)

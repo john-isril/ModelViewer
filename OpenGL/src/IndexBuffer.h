@@ -12,9 +12,11 @@ private:
 
 public:
 	IndexBuffer(const uint32_t* data, uint32_t count);
+	IndexBuffer();
 	~IndexBuffer();
 	void Bind() const;
 	void Unbind() const;
+	void BindBufferData(const uint32_t* data, uint32_t count);
 	inline uint32_t GetCount() const { return m_count; };
 
 };
