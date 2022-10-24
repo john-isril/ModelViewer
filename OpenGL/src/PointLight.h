@@ -19,6 +19,7 @@ public:
 	float GetLinear() const;
 	float GetQuadratic() const;
 	bool& GetIsOn();
+	bool& GetIsHidden();
 
 	void SetSpecular(const glm::vec3 &specular);
 	void SetColor(const glm::vec3& color);
@@ -41,4 +42,5 @@ private:
 	float m_linear;
 	float m_quadratic;
 	bool m_is_on;
+	bool m_is_hidden;
 };

@@ -192,14 +192,16 @@ int main()
 
         view = camera.GetViewMatrix();
 
-        point_light.GetModel().GetTransform().UpdateModelMatrix();
         point_light.GetModel().GetTransform().UpdateMVP(view, projection);
-        point_light.UpdateColors();
 
         light_source_shader.Bind();
         light_source_shader.SetUniformMat4f("mvp", point_light.GetModel().GetTransform().GetMVPMatrix());
         light_source_shader.SetUniformVec3f("light_color", point_light.GetColor());
-        renderer.DrawModel(point_light.GetModel(), light_source_shader);
+        
+        if (!point_light.GetIsHidden())
+        {
+            renderer.DrawModel(point_light.GetModel(), light_source_shader);
+        }
 
         model_shader.Bind();
 
@@ -222,7 +224,6 @@ int main()
         model_shader.SetUniformVec3f("point_light.ambient", point_light.GetAmbient());
         model_shader.SetUniformVec3f("point_light.position", point_light.GetModel().GetTransform().GetTranslation());
 
-        model_3D.GetTransform().UpdateModelMatrix();
         model_3D.GetTransform().UpdateMVP(view, projection);
         model_shader.SetUniformMat4f("model", model_3D.GetTransform().GetModelMatrix());
         model_shader.SetUniformMat4f("mvp", model_3D.GetTransform().GetMVPMatrix());
@@ -243,8 +244,7 @@ int main()
 
         editor.BeginRender();
         editor.CreateTransformMenu("3D Model", model_3D.GetTransform());
-        editor.CreateTransformMenu("Light Cube", point_light.GetModel().GetTransform());
-        editor.CreateLightMenu("Point Light", point_light.GetBrightness(), point_light.GetColor(), point_light.GetIsOn());
+        editor.CreatePointLightMenu("Point Light", &point_light);
         editor.CreateFiltersMenu("Filters", postprocessing_shader, filter_type, vignette_intensity, blur_intensity, glfwGetTime());
         editor.CreateTextInput("3D Model File Path", &model_3D);
         editor.CreateBackgroundMenu("Background", background_color, show_skybox);

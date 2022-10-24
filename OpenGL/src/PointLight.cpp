@@ -1,7 +1,7 @@
 #include "PointLight.h"
 
 PointLight::PointLight(const std::string& path) :
-	m_model{path}, m_specular{1.0f}, m_color{1.0f}, m_constant{1.0f}, m_quadratic{0.032f}, m_is_on{false}, m_brightness{1.0f}, m_linear{0.09}
+	m_model{path}, m_specular{1.0f}, m_color{1.0f}, m_constant{1.0f}, m_quadratic{0.032f}, m_is_on{false}, m_brightness{1.0f}, m_linear{0.09}, m_is_hidden{false}
 {
 	m_model.GetTransform().SetTranslation(glm::vec3{ 1.2f, 1.0f, 2.0f });
 	m_model.GetTransform().SetScale(glm::vec3{ 0.5f });
@@ -55,6 +55,11 @@ float PointLight::GetQuadratic() const
 bool& PointLight::GetIsOn()
 {
 	return m_is_on;
+}
+
+bool& PointLight::GetIsHidden()
+{
+	return m_is_hidden;
 }
 
 void PointLight::SetSpecular(const glm::vec3& specular)

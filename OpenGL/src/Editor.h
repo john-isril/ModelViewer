@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Transform.h"
 #include "Shader.h"
+#include "PointLight.h"
 
 class Editor
 {
@@ -23,7 +24,7 @@ public:
 	static void Shutdown();
 
 	static void CreateTransformMenu(const char* title, Transform &transform);
-	static void CreateLightMenu(const char* title, float& brightness, glm::vec3& color, bool &is_on);
+	static void CreatePointLightMenu(const char* title, PointLight *point_light);
 	static void CreateFiltersMenu(const char* title, Shader &shader, int &filter_type, float &vignette_intensity, float &blur_intensity, float time);
 	static void CreateBackgroundMenu(const char* title, glm::vec3& color, bool& show_skybox);
 	static void CreateTextInput(const char* title, class Model* model);

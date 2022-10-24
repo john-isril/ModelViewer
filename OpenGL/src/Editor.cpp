@@ -114,19 +114,25 @@ void Editor::CreateTransformMenu(const char* title, Transform& transform)
 
     ImGui::DragFloat3("Scale", &scale.x, 0.01f, 0.0f, 50.0f);
     transform.SetScale(scale);
-
+    transform.UpdateModelMatrix();
     ImGui::End();
 }
 
-void Editor::CreateLightMenu(const char* title, float& brightness, glm::vec3 & color, bool &is_on)
+void Editor::CreatePointLightMenu(const char* title, PointLight *point_light)
 {
     ImGui::Begin(title);
     if (ImGui::Button("Toggle"))
     {
-        is_on = 1 - is_on;
+        point_light->GetIsOn() = 1 - point_light->GetIsOn();
     }
-    ImGui::DragFloat("Brightness", &brightness, 0.1f, 0.0f, 100.0f);
-    ImGui::ColorEdit3("Color", (float*)&color);
+    if (ImGui::Button("Hidden"))
+    {
+        point_light->GetIsHidden() = 1 - point_light->GetIsHidden();
+    }
+    ImGui::DragFloat("Brightness", &(point_light->GetBrightness()), 0.1f, 0.0f, 100.0f);
+    ImGui::ColorEdit3("Color", (float*)(&(point_light->GetColor())));
+    CreateTransformMenu(title, (point_light->GetModel().GetTransform()));
+    point_light->UpdateColors();
     ImGui::End();
 }
 
