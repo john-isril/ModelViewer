@@ -223,7 +223,7 @@ int main()
     Skybox skybox{ cubemap_file_paths };
 
     //////////////////////////////////////////////////////////////////////// 3D MODEL ///////////////////////////////////////////////////////////////
-    Model model_3D("Assets/sphere/sphere.obj");
+    Model model_3D("Assets/sphere/backpack.obj");
     Renderer renderer{};
 
     glm::mat4 view{ 1.0f };
