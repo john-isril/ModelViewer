@@ -3,6 +3,27 @@
 Transform::Transform(const glm::vec3& scale, const Rotation& rotation, const glm::vec3& translation) :
 	m_scale{scale}, m_rotation{rotation}, m_translation{translation}
 {
+	this->UpdateModelMatrix();
+}
+
+Transform::Transform(const Transform& transform) :
+	m_scale{transform.m_scale}, m_rotation{transform.m_rotation}, m_translation{transform.m_translation}, m_mvp_matrix{1.0f}
+{
+	this->UpdateModelMatrix();
+}
+
+Transform& Transform::operator=(const Transform& rhs)
+{
+	if (this == &rhs)
+	{
+		return *this;
+	}
+
+	m_scale = rhs.m_scale;
+	m_rotation = rhs.m_rotation;
+	m_translation = rhs.m_translation;
+
+	return *this;
 }
 
 float Transform::GetScaleX() const
@@ -213,6 +234,31 @@ void Transform::AddTranslation(const glm::vec3& vec)
 void Transform::SubtractTranslation(const glm::vec3& vec)
 {
 	m_translation -= vec;
+}
+
+void Transform::UpdateModelMatrix()
+{
+	m_model_matrix = glm::mat4(1.0f);
+	m_model_matrix = glm::translate(m_model_matrix, this->GetTranslation());
+	m_model_matrix = glm::rotate(m_model_matrix, glm::radians(m_rotation.yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+	m_model_matrix = glm::rotate(m_model_matrix, glm::radians(m_rotation.pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+	m_model_matrix = glm::rotate(m_model_matrix, glm::radians(m_rotation.roll), glm::vec3(0.0f, 0.0f, 1.0f));
+	m_model_matrix = glm::scale(m_model_matrix, this->GetScale());
+}
+
+void Transform::UpdateMVP(const glm::mat4& view, const glm::mat4& projection)
+{
+	m_mvp_matrix = projection * view * m_model_matrix;
+}
+
+const glm::mat4& Transform::GetModelMatrix() const
+{
+	return m_model_matrix;
+}
+
+const glm::mat4& Transform::GetMVPMatrix() const
+{
+	return m_mvp_matrix;
 }
 
 Transform::~Transform()

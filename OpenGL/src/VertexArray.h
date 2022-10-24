@@ -5,7 +5,8 @@ class VertexArray
 {
 public:
 	VertexArray();
-//	~VertexArray();
+	VertexArray(const VertexArray& va);
+	~VertexArray();
 	void AddBufferLayout(const class VertexBuffer& vb, const class VertexBufferLayout& layout);
 	void AddBufferLayoutMeshVertex(const class VertexBuffer& vb);
 	void Bind() const;

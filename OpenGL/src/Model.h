@@ -20,9 +20,11 @@ public:
     const std::vector<Mesh>* GetMeshes() const;
     Transform& GetTransform();
     void LoadNewModel(std::string const& path);
+    const std::string& GetFilePath() const;
 
 private:
     std::unordered_set<std::string> m_loaded_textures_file_names;
+    std::string m_path;
     std::vector<Mesh> m_meshes;
     std::string m_directory;
     Transform m_transform;

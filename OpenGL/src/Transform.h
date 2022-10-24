@@ -13,6 +13,9 @@ class Transform
 {
 public:
 	Transform(const glm::vec3& scale = { 1.0f, 1.0f, 1.0f }, const Rotation& rotation = {}, const glm::vec3& translation = {});
+	Transform(const Transform& transform);
+
+	Transform& operator=(const Transform& rhs);
 	float GetScaleX() const;
 	float GetScaleY() const;
 	float GetScaleZ() const;
@@ -59,12 +62,20 @@ public:
 	void AddTranslation(const glm::vec3& vec); // adding another vector 3 to the position/translation
 	void SubtractTranslation(const glm::vec3& vec);
 
+	void UpdateModelMatrix();
+	void UpdateMVP(const glm::mat4& view, const glm::mat4& projection);
+	const glm::mat4& GetModelMatrix() const;
+	const glm::mat4& GetMVPMatrix() const;
+
 	~Transform();
 
 private:
 	glm::vec3 m_scale;
 	Rotation m_rotation;
 	glm::vec3 m_translation;
+
+	glm::mat4 m_model_matrix;
+	glm::mat4 m_mvp_matrix;
 
 private:
 

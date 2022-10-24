@@ -2,14 +2,14 @@
 #include <glad/glad.h>
 #include <iostream>
 
-Texture::Texture(const char *file_path, bool flip_vertically_on_load, Type type, std::string file_name)
-	: m_ID{}, m_buffer{ nullptr }, m_width{}, m_height{}, m_color_channels{}, m_type{ type }, m_file_name{ file_name }
+Texture::Texture(const std::string& file_path, const std::string& file_name, Type type, bool flip_vertically_on_load)
+	: m_ID{}, m_buffer{ nullptr }, m_width{}, m_height{}, m_color_channels{}, m_type{ type }, m_file_name{ file_name }, m_file_path{file_path}, m_flip_uv{flip_vertically_on_load}
 {
-	this->Load(file_path, flip_vertically_on_load);
+	this->Load(file_path.c_str(), flip_vertically_on_load);
 }
 
 Texture::Texture(const Texture& texture) :
-	m_ID{ texture.m_ID }, m_buffer{ texture.m_buffer }, m_width{ texture.m_width }, m_height{ texture.m_height }, m_color_channels{}, m_type{ texture.m_type }, m_file_name{ texture.m_file_name }
+	Texture(texture.m_file_path, texture.m_file_name, texture.m_type, texture.m_flip_uv)
 {
 }
 
@@ -21,7 +21,7 @@ Texture::Texture(const char* file_paths[]) :
 
 Texture::~Texture()
 {
-	//glDeleteTextures(1, &m_ID);
+	glDeleteTextures(1, &m_ID);
 }
 
 void Texture::Bind() const
@@ -52,7 +52,7 @@ void Texture::Load(const char* file_path, bool flip_vertically_on_load)
 {
 	glGenTextures(1, &m_ID);
 
-	stbi_set_flip_vertically_on_load(true);
+	stbi_set_flip_vertically_on_load(flip_vertically_on_load);
 
 	m_buffer = stbi_load(file_path, &m_width, &m_height, &m_color_channels, 0);
 	if (m_buffer)

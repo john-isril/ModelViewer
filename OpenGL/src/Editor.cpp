@@ -3,7 +3,9 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_stdlib.h"
+#include "Model.h"
 
+char model_input_buffer[160]{};
 Editor::Editor()
 {
 }
@@ -156,10 +158,16 @@ void Editor::CreateBackgroundMenu(const char* title, glm::vec3& color, bool& sho
     ImGui::End();
 }
 
-void Editor::CreateTextInput(const char* title, char path[])
+void Editor::CreateTextInput(const char* title, Model *model)
 {
     ImGui::Begin(title);
-    ImGui::InputText(title, path, 50);
+    ImGui::InputText(title, model_input_buffer, 160);
+
+    if (ImGui::Button("Load model"))
+    {
+        model->LoadNewModel(std::string(model_input_buffer));
+    }
+
     ImGui::End();
 }
 

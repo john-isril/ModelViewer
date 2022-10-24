@@ -1,11 +1,7 @@
 #include "Model.h"
 
 #include <iostream>
-#include <glad/glad.h> 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include "Renderer.h"
-#include "Transform.h"
 
 Model::Model(const std::string &path) :
     m_meshes{}, m_directory{}, m_transform{}
@@ -21,6 +17,13 @@ Model::Model(const Transform& transform, const std::string& path) :
 
 void Model::LoadModel(std::string const& path)
 {
+    if (m_path == path)
+    {
+        std::cerr << "Model already loaded!" << std::endl;
+        return;
+    }
+
+    m_path = path;
     Assimp::Importer importer;
     const aiScene* scene{ importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace) };
 
@@ -62,6 +65,16 @@ Transform& Model::GetTransform()
 
 void Model::LoadNewModel(std::string const& path)
 {
+    if (m_path == path)
+    {
+        std::cerr << "Model already loaded!" << std::endl;
+        return;
+    }
     m_meshes.clear();
     this->LoadModel(path);
+}
+
+const std::string& Model::GetFilePath() const
+{
+    return m_path;
 }

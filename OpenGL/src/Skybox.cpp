@@ -1,7 +1,7 @@
 #include "Skybox.h"
 
 Skybox::Skybox(const char* cubemap_file_paths[]) :
-	m_VBO{m_skybox_vertices, sizeof(m_skybox_vertices)}, m_texture{cubemap_file_paths}
+	m_VBO{(void*)(m_skybox_vertices), sizeof(m_skybox_vertices)}, m_texture{cubemap_file_paths}
 {
 	m_Layout.AddAttribute<float>(3);
 	m_VAO.AddBufferLayout(m_VBO, m_Layout);

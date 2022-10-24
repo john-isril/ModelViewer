@@ -31,6 +31,9 @@ public:
 	VertexBufferLayout()
 		: m_stride {} {}
 
+	~VertexBufferLayout()
+	{}
+
 	template<typename T>
 	void AddAttribute(uint32_t count)
 	{}

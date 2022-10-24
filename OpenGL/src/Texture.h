@@ -1,5 +1,4 @@
-#ifndef TEXTURE_H
-#define TEXTURE_H
+#pragma once
 
 #include "stb_image.h"
 #include <cstdint>
@@ -22,7 +21,7 @@ public:
 	static constexpr uint8_t NUM_OF_CUBE_FACES{ 6 };
 
 public:
-	Texture(const char* file_path, bool flip_vertically_on_load, Type type, std::string file_name);
+	Texture(const std::string &file_path, const std::string &file_name, Type type, bool flip_vertically_on_load);
 	Texture(const Texture& texture);
 	Texture(const char *file_paths[]);
 
@@ -43,5 +42,6 @@ private:
 	int32_t m_width, m_height, m_color_channels;
 	Type m_type;
 	std::string m_file_name;
+	std::string m_file_path;
+	bool m_flip_uv;
 };
-#endif // !TEXTURE_H

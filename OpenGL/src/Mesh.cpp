@@ -1,7 +1,6 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "Texture.h"
-#include "Vertex.h"
 #include <string>
 
 void Mesh::Setup()
@@ -10,7 +9,7 @@ void Mesh::Setup()
 	m_VAO.Unbind();
 }
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, const std::vector<Texture>& textures) :
+Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, std::vector<Texture>& textures) :
     m_vertices{ vertices }, m_indices{ indices }, m_textures{ textures },
     m_VAO{}, m_VBO{ &vertices[0], vertices.size() * sizeof(Vertex) }, m_IBO{ &indices[0], m_indices.size() }
 {
@@ -19,8 +18,29 @@ Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& ind
 }
 
 Mesh::Mesh(const Mesh& mesh) :
-    Mesh(mesh.m_vertices, mesh.m_indices, mesh.m_textures)
+    m_VAO{}
 {
+    m_vertices.reserve(mesh.m_vertices.size());
+    m_indices.reserve(mesh.m_indices.size());
+    m_textures.reserve(mesh.m_textures.size());
+
+    for (size_t i{ 0 }; i < mesh.m_vertices.size(); ++i)
+    {
+        m_vertices.push_back(mesh.m_vertices[i]);
+    }
+    
+    for (size_t i{ 0 }; i < mesh.m_indices.size(); ++i)
+    {
+        m_indices.push_back(mesh.m_indices[i]);
+    }
+    
+    for (size_t i{ 0 }; i < mesh.m_textures.size(); ++i)
+    {
+        m_textures.push_back(mesh.m_textures[i]);
+    }
+    m_VBO.BindBufferData((void*)(&m_vertices[0]), m_vertices.size() * sizeof(Vertex));
+    m_IBO.BindBufferData(&m_indices[0], m_indices.size());
+
     this->Setup();
 }
 
@@ -82,10 +102,10 @@ Mesh::Mesh(aiMesh* mesh, const aiScene* scene, std::unordered_set<std::string>& 
 
     aiMaterial* material{ scene->mMaterials[mesh->mMaterialIndex] };
 
-    size_t total_texture_count{ material->GetTextureCount(aiTextureType_DIFFUSE) *
-        material->GetTextureCount(aiTextureType_SPECULAR) *
-        material->GetTextureCount(aiTextureType_HEIGHT) *
-        material->GetTextureCount(aiTextureType_AMBIENT) *
+    size_t total_texture_count{ material->GetTextureCount(aiTextureType_DIFFUSE) +
+        material->GetTextureCount(aiTextureType_SPECULAR) +
+        material->GetTextureCount(aiTextureType_HEIGHT) +
+        material->GetTextureCount(aiTextureType_AMBIENT) +
         material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS)
     };
 
@@ -101,7 +121,6 @@ Mesh::Mesh(aiMesh* mesh, const aiScene* scene, std::unordered_set<std::string>& 
     m_IBO.BindBufferData(&m_indices[0], m_indices.size());
 
     this->Setup();
-    //return Mesh(vertices, indices, textures);
 }
 
 void Mesh::Bind() const
@@ -127,7 +146,7 @@ void Mesh::LoadMaterialTextures(aiMaterial* material, aiTextureType type, std::u
         if (loaded_textures_file_names.empty() || !found)
         {
             std::string file_path{ directory + '/' + file_name };
-            m_textures.emplace_back(file_path.c_str(), true, texture_type, file_name);
+            m_textures.emplace_back(file_path, file_name, texture_type, true);
             loaded_textures_file_names.insert(file_name);
         }
     }

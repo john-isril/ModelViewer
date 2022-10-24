@@ -11,6 +11,13 @@ VertexArray::VertexArray()
 	glBindVertexArray(m_ID);
 }
 
+VertexArray::VertexArray(const VertexArray& va)
+	: m_ID{}, stride{}
+{
+	glGenVertexArrays(1, &m_ID);
+	glBindVertexArray(m_ID);
+}
+
 void VertexArray::AddBufferLayout(const VertexBuffer& vb, const VertexBufferLayout& layout)
 {
 	vb.Bind();
@@ -49,13 +56,13 @@ void VertexArray::AddBufferLayoutMeshVertex(const VertexBuffer& vb)
 	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
 	
 	// bone ids
-	glEnableVertexAttribArray(5);
-	glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, m_BoneIDs));
+	//glEnableVertexAttribArray(5);
+	//glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, m_BoneIDs));
 
 	// weights
-	glEnableVertexAttribArray(6);
-	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
-	glBindVertexArray(0);
+	//glEnableVertexAttribArray(6);
+	//glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
+	//glBindVertexArray(0);
 }
 
 void VertexArray::Bind() const
@@ -67,9 +74,9 @@ void VertexArray::Unbind() const
 {
 	glBindVertexArray(0);
 }
-/*
+
 VertexArray::~VertexArray()
 {
 	glDeleteVertexArrays(1, &m_ID);
 }
-*/ //FIX: destroys when out of scope since were returning copy 
+//FIX: destroys when out of scope since were returning copy 

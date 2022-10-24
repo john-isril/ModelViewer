@@ -1,7 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glad/glad.h>
 #include <string>
 #include <vector>
 #include "Shader.h"
@@ -15,17 +14,12 @@
 #include <assimp/postprocess.h>
 #include <unordered_set>
 
-#define MAX_BONE_INFLUENCE 4
-
 struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec2 texture_coordinates;
     glm::vec3 tangent;
     glm::vec3 bitangent;
-
-    uint32_t m_BoneIDs[MAX_BONE_INFLUENCE];
-    float m_Weights[MAX_BONE_INFLUENCE];
 
     Vertex(glm::vec3 position, glm::vec3 normal, glm::vec2 texture_coordinates, glm::vec3 tangent, glm::vec3 bitangent)
     {
@@ -35,11 +29,20 @@ struct Vertex {
         this->tangent = tangent;
         this->bitangent = bitangent;
     }
+
+    Vertex(const Vertex& vert)
+    {
+        this->position = vert.position;
+        this->normal = vert.normal;
+        this->texture_coordinates = vert.texture_coordinates;
+        this->tangent = vert.tangent;
+        this->bitangent = vert.bitangent;
+    }
 };
 
 class Mesh {
 public:
-    Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, const std::vector<Texture>& textures);
+    Mesh(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, std::vector<Texture>& textures);
     Mesh(const Mesh& mesh);
     Mesh(aiMesh* mesh, const aiScene* scene, std::unordered_set<std::string>& loaded_textures_file_names, const std::string& directory);
 
