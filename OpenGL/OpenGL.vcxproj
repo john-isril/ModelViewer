@@ -165,6 +165,7 @@
     <ClCompile Include="Dependencies\glad\src\glad.c" />
     <ClCompile Include="Dependencies\glm\glm\detail\glm.cpp" />
     <ClCompile Include="Dependencies\stb_image\stb_image.cpp" />
+    <ClCompile Include="src\PointLight.cpp" />
     <ClCompile Include="src\Skybox.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Editor.cpp" />

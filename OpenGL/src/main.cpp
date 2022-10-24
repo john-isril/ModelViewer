@@ -22,6 +22,7 @@
 #include "Skybox.h"
 #include <stdio.h>
 #include <string.h>
+#include "PointLight.h"
 
 static constexpr unsigned int  SCREEN_WIDTH{ 16 * 90 };
 static constexpr unsigned int SCREEN_HEIGHT{ 9 * 90 };
@@ -94,92 +95,7 @@ int main()
     ////////////////////////////////////////////////////////////////////////////////////////// LIGHTBOX/POINT LIGHT ///////////////////////////////////////////////////////////////////////////////////////
     glm::vec3 light_specular{ 1.0f };
 
-    float light_box_vertices[]
-    {
-        // back face
-        //position             // texture_coords        // normal
-        0.5f, 0.5f, 0.5f,          1.0f, 1.0f,          0.0f, 0.0f, 1.0f,                                       // top right
-        0.5f, -0.5f, 0.5f,         1.0f, 0.0f,          0.0f, 0.0f, 1.0f,                       // bottom right
-        -0.5f, -0.5f, 0.5f,        0.0f, 0.0f,          0.0f, 0.0f, 1.0f,                 // bottom left
-        -0.5f, 0.5f, 0.5f,         0.0f, 1.0f,          0.0f, 0.0f, 1.0f,                 // top left
-
-        // front face
-        0.5f, 0.5f, -0.5f,         0.0f, 1.0f,          0.0f, 0.0f, -1.0f,
-        0.5f, -0.5f, -0.5f,        0.0f, 0.0f,          0.0f, 0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f,       1.0f, 0.0f,          0.0f, 0.0f, -1.0f,
-        -0.5f, 0.5f, -0.5f,        1.0f, 1.0f,          0.0f, 0.0f, -1.0f,
-
-        // top face
-        0.5f, 0.5f, -0.5,          1.0f, 1.0f,          0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5,           1.0f, 0.0f,          0.0f, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0.5,          0.0f, 0.0f,          0.0f, 1.0f, 0.0f,
-        -0.5f, 0.5f, -0.5,         0.0f, 1.0f,          0.0f, 1.0f, 0.0f,
-
-        //bottom face
-        0.5f, -0.5f, 0.5,          1.0f, 1.0f,          0.0f, -1.0f, 0.0f,
-        0.5f, -0.5f, -0.5,         1.0f, 0.0f,          0.0f, -1.0f, 0.0f,
-        -0.5f, -0.5f, -0.5,        0.0f, 0.0f,          0.0f, -1.0f, 0.0f,
-        -0.5f, -0.5f, 0.5,         0.0f, 1.0f,          0.0f, -1.0f, 0.0f,
-
-        //right face
-        0.5f, 0.5, -0.5,           1.0f, 1.0f,          1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,        1.0f, 0.0f,          1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.5f,         0.0f, 0.0f,          1.0f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.5f,          0.0f, 1.0f,          1.0f, 0.0f, 0.0f,
-
-        //left face
-        -0.5f, 0.5, 0.5,           1.0f, 1.0f,          -1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f,        1.0f, 0.0f,          -1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,       0.0f, 0.0f,          -1.0f, 0.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f,        0.0f, 1.0f,          -1.0f, 0.0f, 0.0f
-    };
-
-    unsigned int light_box_indices[]
-    {
-        0, 1, 3,
-        1, 2, 3,
-
-        4, 5, 7,
-        5, 6, 7,
-
-        8, 9, 11,
-        9, 10, 11,
-
-        12, 13, 15,
-        13, 14, 15,
-
-        16, 17, 19,
-        17, 18, 19,
-
-        20, 21, 23,
-        21, 22, 23
-    };
-
-    VertexBuffer vb{ light_box_vertices, sizeof(light_box_vertices) };
-    IndexBuffer ib{ light_box_indices, 36 };
-    VertexBufferLayout layout{};
-    layout.AddAttribute<float>(3);
-    layout.AddAttribute<float>(2);
-    layout.AddAttribute<float>(3);
-
-    VertexArray point_light_va{};
-    point_light_va.AddBufferLayout(vb, layout);
-
-    float point_light_brightness{ 1.0f };
-    glm::vec3 point_light_color{ 1.0f, 1.0f, 1.0f };
-    glm::vec3 point_light_diffuse_color = point_light_color * glm::vec3(0.5f);
-    glm::vec3 point_light_ambient_color = point_light_color * glm::vec3(0.2f);
-    float point_light_constant{ 1.0f };
-    float point_light_linear{ 0.09f };
-    float point_light_quadratic{ 0.032f };
-    bool point_light_is_on{ true };
-
-    glm::mat4 point_light_model{ 1.0f };
-    Transform point_light_transform{ glm::vec3{1.0f, 1.0f, 1.0f}, Rotation{}, glm::vec3{1.2f, 1.0f, 2.0f} };
-    point_light_model = glm::translate(point_light_model, point_light_transform.GetTranslation());
-    rotate(point_light_model, point_light_transform.GetRotation());
-    point_light_model = glm::scale(point_light_model, point_light_transform.GetScale());
-    glm::mat4 point_light_mvp{};
+    PointLight point_light{ "Assets/sphere/sphere.obj" };
 
     //////////////////////////////////////////////////// DIRECTIONAL LIGHT ////////////////////////////////////////////////////////////////////
 
@@ -223,7 +139,7 @@ int main()
     Skybox skybox{ cubemap_file_paths };
 
     //////////////////////////////////////////////////////////////////////// 3D MODEL ///////////////////////////////////////////////////////////////
-    Model model_3D("Assets/sphere/backpack.obj");
+    Model model_3D("Assets/backpack/backpack.obj");
     Renderer renderer{};
 
     glm::mat4 view{ 1.0f };
@@ -238,14 +154,15 @@ int main()
     model_shader.SetUniformVec3f("directional_light.specular", light_specular);
 
     
-    model_shader.SetUniform1f("point_light.brightness", point_light_brightness);
-    model_shader.SetUniform1f("point_light.constant", point_light_constant);
-    model_shader.SetUniform1f("point_light.linear_", point_light_linear);
-    model_shader.SetUniform1f("point_light.quadratic", point_light_quadratic);
-    model_shader.SetUniformVec3f("point_light.position", point_light_transform.GetTranslation());
-    model_shader.SetUniformVec3f("point_light.ambient", point_light_ambient_color);
-    model_shader.SetUniformVec3f("point_light.diffuse", point_light_diffuse_color);
+    model_shader.SetUniform1f("point_light.brightness", point_light.GetBrightness());
+    model_shader.SetUniform1f("point_light.constant", point_light.GetConstant());
+    model_shader.SetUniform1f("point_light.linear_", point_light.GetLinear());
+    model_shader.SetUniform1f("point_light.quadratic", point_light.GetQuadratic());
+    model_shader.SetUniformVec3f("point_light.position", point_light.GetModel().GetTransform().GetTranslation());
+    model_shader.SetUniformVec3f("point_light.ambient", point_light.GetAmbient());
+    model_shader.SetUniformVec3f("point_light.diffuse", point_light.GetDiffuse());
     model_shader.SetUniformVec3f("point_light.specular", light_specular);
+    model_shader.SetUniform1f("material.shininess", 16.0f);
 
     postprocessing_shader.Bind();
     postprocessing_shader.SetUniform1i("screen_quad_texture", 0);
@@ -275,34 +192,35 @@ int main()
 
         view = camera.GetViewMatrix();
 
-        point_light_model = glm::mat4(1.0f);
-        point_light_model = glm::translate(point_light_model, point_light_transform.GetTranslation());
-        rotate(point_light_model, point_light_transform.GetRotation());
-        point_light_model = glm::scale(point_light_model, point_light_transform.GetScale());
-        point_light_mvp = projection * view * point_light_model;
-        point_light_diffuse_color = point_light_color * glm::vec3(0.5f);
-        point_light_ambient_color = point_light_color * glm::vec3(0.2f);
+        point_light.GetModel().GetTransform().UpdateModelMatrix();
+        point_light.GetModel().GetTransform().UpdateMVP(view, projection);
+        point_light.UpdateColors();
 
         light_source_shader.Bind();
-        light_source_shader.SetUniformMat4f("mvp", point_light_mvp);
-        light_source_shader.SetUniformVec3f("light_color", point_light_color);
-        renderer.DrawElements(point_light_va, ib, light_source_shader);
+        light_source_shader.SetUniformMat4f("mvp", point_light.GetModel().GetTransform().GetMVPMatrix());
+        light_source_shader.SetUniformVec3f("light_color", point_light.GetColor());
+        renderer.DrawModel(point_light.GetModel(), light_source_shader);
 
         model_shader.Bind();
 
-        if (point_light_is_on)
+        if (point_light.GetIsOn())
         {
-            model_shader.SetUniform1f("point_light.brightness", point_light_brightness);
+            light_source_shader.Bind();
+            light_source_shader.SetUniform1f("light_brightness", point_light.GetBrightness());
+            model_shader.Bind();
+            model_shader.SetUniform1f("point_light.brightness", point_light.GetBrightness());
         }
         else
         {
+            light_source_shader.Bind();
+            light_source_shader.SetUniform1f("light_brightness", 0.0f);
+            model_shader.Bind();
             model_shader.SetUniform1f("point_light.brightness", 0.0f);
         }
 
-        model_shader.SetUniformVec3f("point_light.diffuse", point_light_diffuse_color);
-        model_shader.SetUniformVec3f("point_light.ambient", point_light_ambient_color);
-        model_shader.SetUniformVec3f("point_light.position", point_light_transform.GetTranslation());
-        model_shader.SetUniform1f("material.shininess", 16.0f);
+        model_shader.SetUniformVec3f("point_light.diffuse", point_light.GetDiffuse());
+        model_shader.SetUniformVec3f("point_light.ambient", point_light.GetAmbient());
+        model_shader.SetUniformVec3f("point_light.position", point_light.GetModel().GetTransform().GetTranslation());
 
         model_3D.GetTransform().UpdateModelMatrix();
         model_3D.GetTransform().UpdateMVP(view, projection);
@@ -325,8 +243,8 @@ int main()
 
         editor.BeginRender();
         editor.CreateTransformMenu("3D Model", model_3D.GetTransform());
-        editor.CreateTransformMenu("Light Cube", point_light_transform);
-        editor.CreateLightMenu("Point Light", point_light_brightness, point_light_color, point_light_is_on);
+        editor.CreateTransformMenu("Light Cube", point_light.GetModel().GetTransform());
+        editor.CreateLightMenu("Point Light", point_light.GetBrightness(), point_light.GetColor(), point_light.GetIsOn());
         editor.CreateFiltersMenu("Filters", postprocessing_shader, filter_type, vignette_intensity, blur_intensity, glfwGetTime());
         editor.CreateTextInput("3D Model File Path", &model_3D);
         editor.CreateBackgroundMenu("Background", background_color, show_skybox);

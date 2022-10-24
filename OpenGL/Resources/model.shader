@@ -7,7 +7,6 @@ layout(location = 2) in vec2 texture_coordinates_in;
 
 uniform mat4 model;
 uniform mat4 mvp;
-//out vec4 vertexColor;
 out vec2 texture_coordinates;
 out vec3 fragment_position;
 out vec3 normal;
