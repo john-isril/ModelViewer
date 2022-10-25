@@ -127,9 +127,9 @@ void Editor::CreatePointLightMenu(const char* title, PointLight *point_light)
     }
     if (ImGui::Button("Hidden"))
     {
-        point_light->GetIsHidden() = 1 - point_light->GetIsHidden();
+        point_light->Toggle();
     }
-    ImGui::DragFloat("Brightness", &(point_light->GetBrightness()), 0.1f, 0.0f, 100.0f);
+    ImGui::DragFloat("Brightness", &(point_light->GetBrightness()), 0.1f, 0.0f, 10.0f);
     ImGui::ColorEdit3("Color", (float*)(&(point_light->GetColor())));
     CreateTransformMenu(title, (point_light->GetModel().GetTransform()));
     point_light->UpdateColors();

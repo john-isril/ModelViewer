@@ -6,7 +6,6 @@
 #include "IndexBuffer.h"
 #include "VertexArray.h"
 #include "VertexBufferLayout.h"
-#include "Texture.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -20,9 +19,8 @@
 #include "FrameBuffer.h"
 #include "FilterType.h"
 #include "Skybox.h"
-#include <stdio.h>
-#include <string.h>
 #include "PointLight.h"
+#include "DirectionalLight.h"
 
 static constexpr unsigned int  SCREEN_WIDTH{ 16 * 90 };
 static constexpr unsigned int SCREEN_HEIGHT{ 9 * 90 };
@@ -39,7 +37,6 @@ static float delta_time{ 0.0f };
 static void frame_buffer_size_callback(GLFWwindow* window, int width, int height);
 static void processInput(GLFWwindow* window);
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-static void rotate(glm::mat4& model, const Rotation& rotation);
 
 static Camera camera{ Transform{glm::vec3 {0.0f}, Rotation{0.0f, -90.0f, 0.0f}, glm::vec3 {0.0f, 0.0f, 3.0f}} };
 static Editor editor{};
@@ -92,22 +89,14 @@ int main()
     Shader postprocessing_shader{ "Resources/postprocessing.shader" };
     Shader skybox_shader{ "Resources/skybox.shader" };
 
-    ////////////////////////////////////////////////////////////////////////////////////////// LIGHTBOX/POINT LIGHT ///////////////////////////////////////////////////////////////////////////////////////
-    glm::vec3 light_specular{ 1.0f };
+    ////////////////////////////////////////////////////////////////////////////////////////// LIGHTS ///////////////////////////////////////////////////////////////////////////////////////
 
     PointLight point_light{ "Assets/sphere/sphere.obj" };
-
-    //////////////////////////////////////////////////// DIRECTIONAL LIGHT ////////////////////////////////////////////////////////////////////
-
-    float directional_light_brightness{ 1.0f };
-    glm::vec3 directional_light_color{ 1.0f, 1.0f, 1.0f };
-    glm::vec3 directional_light_direction{ -0.2f, -1.0f, -0.3f };
-    glm::vec3 directional_light_diffuse_color = directional_light_color * glm::vec3(0.5f);
-    glm::vec3 directional_light_ambient_color = directional_light_color * glm::vec3(0.2f);
-
-    constexpr uint8_t NUM_OF_SCREEN_QUAD_VERTICES{ 6 };
+    DirectionalLight directional_light{};
 
     ////////////////////////////////////////////////////////// POST PROCESSING SCREEN QUAD /////////////////////////////////////////////////
+    constexpr uint8_t NUM_OF_SCREEN_QUAD_VERTICES{ 6 };
+
     float screen_quad_vertices[] = {
         // positions   // texture coordinates
         -1.0f,  1.0f,  0.0f, 1.0f,
@@ -147,11 +136,11 @@ int main()
 
     model_shader.Bind();
     
-    model_shader.SetUniform1f("directional_light.brightness", directional_light_brightness);
-    model_shader.SetUniformVec3f("directional_light.direction", directional_light_direction);
-    model_shader.SetUniformVec3f("directional_light.ambient", directional_light_ambient_color);
-    model_shader.SetUniformVec3f("directional_light.diffuse", directional_light_diffuse_color);
-    model_shader.SetUniformVec3f("directional_light.specular", light_specular);
+    model_shader.SetUniform1f("directional_light.brightness", directional_light.GetBrightness());
+    model_shader.SetUniformVec3f("directional_light.direction", directional_light.GetDirection());
+    model_shader.SetUniformVec3f("directional_light.ambient", directional_light.GetAmbient());
+    model_shader.SetUniformVec3f("directional_light.diffuse", directional_light.GetDiffuse());
+    model_shader.SetUniformVec3f("directional_light.specular", directional_light.GetSpecular());
 
     
     model_shader.SetUniform1f("point_light.brightness", point_light.GetBrightness());
@@ -161,7 +150,7 @@ int main()
     model_shader.SetUniformVec3f("point_light.position", point_light.GetModel().GetTransform().GetTranslation());
     model_shader.SetUniformVec3f("point_light.ambient", point_light.GetAmbient());
     model_shader.SetUniformVec3f("point_light.diffuse", point_light.GetDiffuse());
-    model_shader.SetUniformVec3f("point_light.specular", light_specular);
+    model_shader.SetUniformVec3f("point_light.specular", point_light.GetSpecular());
     model_shader.SetUniform1f("material.shininess", 16.0f);
 
     postprocessing_shader.Bind();
@@ -202,23 +191,11 @@ int main()
         {
             renderer.DrawModel(point_light.GetModel(), light_source_shader);
         }
-
+        
+        light_source_shader.Bind();
+        light_source_shader.SetUniform1f("light_brightness", point_light.GetBrightnessOffOn());
         model_shader.Bind();
-
-        if (point_light.GetIsOn())
-        {
-            light_source_shader.Bind();
-            light_source_shader.SetUniform1f("light_brightness", point_light.GetBrightness());
-            model_shader.Bind();
-            model_shader.SetUniform1f("point_light.brightness", point_light.GetBrightness());
-        }
-        else
-        {
-            light_source_shader.Bind();
-            light_source_shader.SetUniform1f("light_brightness", 0.0f);
-            model_shader.Bind();
-            model_shader.SetUniform1f("point_light.brightness", 0.0f);
-        }
+        model_shader.SetUniform1f("point_light.brightness", point_light.GetBrightnessOffOn());
 
         model_shader.SetUniformVec3f("point_light.diffuse", point_light.GetDiffuse());
         model_shader.SetUniformVec3f("point_light.ambient", point_light.GetAmbient());
@@ -307,11 +284,4 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
         float z_offset = static_cast<float>(yoffset) * 400.0f;
         camera.Walk(0.0f, z_offset, delta_time);
     }
-}
-
-void rotate(glm::mat4& model, const Rotation& rotation)
-{
-    model = glm::rotate(model, glm::radians(rotation.yaw), glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(rotation.pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(rotation.roll), glm::vec3(0.0f, 0.0f, 1.0f));
 }

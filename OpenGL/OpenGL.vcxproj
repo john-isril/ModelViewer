@@ -165,6 +165,8 @@
     <ClCompile Include="Dependencies\glad\src\glad.c" />
     <ClCompile Include="Dependencies\glm\glm\detail\glm.cpp" />
     <ClCompile Include="Dependencies\stb_image\stb_image.cpp" />
+    <ClCompile Include="src\DirectionalLight.cpp" />
+    <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\PointLight.cpp" />
     <ClCompile Include="src\Skybox.cpp" />
     <ClCompile Include="src\Camera.cpp" />
@@ -341,6 +343,8 @@
     <ClInclude Include="Dependencies\glm\glm\vec4.hpp" />
     <ClInclude Include="Dependencies\glm\glm\vector_relational.hpp" />
     <ClInclude Include="Dependencies\stb_image\stb_image.h" />
+    <ClInclude Include="src\DirectionalLight.h" />
+    <ClInclude Include="src\Light.h" />
     <ClInclude Include="src\PointLight.h" />
     <ClInclude Include="src\Skybox.h" />
     <ClInclude Include="src\Camera.h" />
