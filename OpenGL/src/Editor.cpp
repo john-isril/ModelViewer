@@ -97,41 +97,58 @@ void Editor::Shutdown()
     ImGui::DestroyContext();
 }
 
-void Editor::CreateTransformMenu(const char* title, Transform& transform)
+void Editor::CreateTransformMenu(const char* title, Transform *transform, uint8_t transform_flags)
 {
-    glm::vec3 translation{ transform.GetTranslation() };
-    Rotation rotation{ transform.GetRotation() };
-    glm::vec3 scale{ transform.GetScale() };
-
     ImGui::Begin(title);
     ImGui::Text("Transform");
 
-    ImGui::DragFloat3("Position", &translation.x, 0.01f);
-    transform.SetTranslation(translation);
+    if (transform_flags & TRANSFORM_TRANSLATION)
+    {
+        glm::vec3 translation{ transform->GetTranslation() };
+        ImGui::DragFloat3("Position", &(translation.x), 0.01f);
+        transform->SetTranslation(translation);
+    }
 
-    ImGui::DragFloat3("Rotation", &rotation.pitch, 0.1f);
-    transform.SetRotation(rotation);
+    if (transform_flags & TRANSFORM_ROTATION)
+    {
+        Rotation rotation{ transform->GetRotation() };
+        ImGui::DragFloat3("Rotation", &(rotation.pitch), 0.1f);
+        transform->SetRotation(rotation);
+    }
 
-    ImGui::DragFloat3("Scale", &scale.x, 0.01f, 0.0f, 50.0f);
-    transform.SetScale(scale);
-    transform.UpdateModelMatrix();
+    if (transform_flags & TRANSFORM_SCALE)
+    {
+        glm::vec3 scale{ transform->GetScale() };
+        if (transform_flags & TRANSFORM_SCALE_UNIFORM)
+        {
+            ImGui::DragFloat("Scale", &(scale.x), 0.01f, 0.0f, 50.0f);
+            transform->SetScaleUniform(scale.x);
+        }
+        else
+        {
+            ImGui::DragFloat3("Scale", &(scale.x), 0.01f, 0.0f, 50.0f);
+            transform->SetScale(scale);
+        }
+    }
+
+    transform->UpdateModelMatrix();
     ImGui::End();
 }
 
 void Editor::CreatePointLightMenu(const char* title, PointLight *point_light)
 {
     ImGui::Begin(title);
-    if (ImGui::Button("Toggle"))
-    {
-        point_light->GetIsOn() = 1 - point_light->GetIsOn();
-    }
-    if (ImGui::Button("Hidden"))
+    if (ImGui::Button("On/Off"))
     {
         point_light->Toggle();
     }
+    if (ImGui::Button("Visible/Hidden"))
+    {
+        point_light->GetIsHidden() = 1 - point_light->GetIsHidden();
+    }
     ImGui::DragFloat("Brightness", &(point_light->GetBrightness()), 0.1f, 0.0f, 10.0f);
     ImGui::ColorEdit3("Color", (float*)(&(point_light->GetColor())));
-    CreateTransformMenu(title, (point_light->GetModel().GetTransform()));
+    CreateTransformMenu(title, &(point_light->GetModel().GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE | TRANSFORM_SCALE_UNIFORM);
     point_light->UpdateColors();
     ImGui::End();
 }

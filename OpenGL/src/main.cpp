@@ -21,20 +21,14 @@
 #include "Skybox.h"
 #include "PointLight.h"
 #include "DirectionalLight.h"
+#include "Window.h"
 
-static constexpr unsigned int  SCREEN_WIDTH{ 16 * 90 };
-static constexpr unsigned int SCREEN_HEIGHT{ 9 * 90 };
-static constexpr float SCREEN_MID_X{ static_cast<float>(SCREEN_WIDTH) / 2.0f };
-static constexpr float SCREEN_MID_Y{ static_cast<float>(SCREEN_HEIGHT) / 2.0f };
 constexpr char GLSL_version[]{ "#version 460" };
 
-static bool first_mouse{ true };
-float last_x_pos{ SCREEN_MID_X };
-float last_y_pos{ SCREEN_MID_Y };
 static float last_frame{ 0.0f };
 static float delta_time{ 0.0f };
 
-static void frame_buffer_size_callback(GLFWwindow* window, int width, int height);
+static bool InitOpenGL();
 static void processInput(GLFWwindow* window);
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
@@ -43,46 +37,12 @@ static Editor editor{};
 
 int main()
 {
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    GLFWwindow* window{ glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "3D Model Viewer", nullptr, nullptr) };
+    Window window{ "3D Model Viewer" };
+    window.SetScrollCallback(scroll_callback);
 
-    if (!window)
-    {
-        std::cerr << "Failed to create GLFW window\n";
-        glfwTerminate();
-        return -1;
-    }
+    editor.Init(window.GetGLFWwindow(), GLSL_version);
 
-    glfwMakeContextCurrent(window);
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cerr << "Failed to initialize GLAD\n";
-        glfwTerminate();
-        return -1;
-    }
-
-    std::cout << glGetString(GL_VERSION) << std::endl;
-
-    editor.Init(window, GLSL_version);
-
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glEnable(GL_MULTISAMPLE);
-    glDebugMessageCallback(DebugUtils::OpenGLMessageCallback, nullptr);
-    glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-
-    glfwSetFramebufferSizeCallback(window, frame_buffer_size_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    glfwSetScrollCallback(window, scroll_callback);
+    if (!InitOpenGL()) return -1;
 
     Shader light_source_shader{ "Resources/light_source.shader" };
     Shader model_shader{ "Resources/model.shader" };
@@ -132,7 +92,7 @@ int main()
     Renderer renderer{};
 
     glm::mat4 view{ 1.0f };
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT), 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(window.GetScreenWidth()) / static_cast<float>(window.GetScreenHeight()), 0.1f, 100.0f);
 
     model_shader.Bind();
     
@@ -156,7 +116,7 @@ int main()
     postprocessing_shader.Bind();
     postprocessing_shader.SetUniform1i("screen_quad_texture", 0);
     
-    FrameBuffer postprocess_frame_buffer{ SCREEN_WIDTH, SCREEN_HEIGHT };
+    FrameBuffer postprocess_frame_buffer{ window.GetScreenWidth(), window.GetScreenHeight()};
 
     skybox_shader.Bind();
     skybox_shader.SetUniform1i("skybox", 0);
@@ -169,12 +129,12 @@ int main()
     bool show_skybox{ true };
     glm::vec3 background_color{ 1.0f, 1.0f, 1.0f };
 
-    while (!glfwWindowShouldClose(window))
+    while (!window.Closed())
     {
         float current_frame = static_cast<float>(glfwGetTime());
         delta_time = current_frame - last_frame;
         last_frame = current_frame;
-        processInput(window);
+        processInput(window.GetGLFWwindow());
 
         postprocess_frame_buffer.Bind();
         renderer.Clear(background_color.r, background_color.g, background_color.b, 1.0f);
@@ -220,25 +180,40 @@ int main()
         renderer.DrawArrays(screen_quad_VAO, postprocessing_shader, NUM_OF_SCREEN_QUAD_VERTICES);
 
         editor.BeginRender();
-        editor.CreateTransformMenu("3D Model", model_3D.GetTransform());
+        editor.CreateTransformMenu("3D Model", &(model_3D.GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE);
         editor.CreatePointLightMenu("Point Light", &point_light);
         editor.CreateFiltersMenu("Filters", postprocessing_shader, filter_type, vignette_intensity, blur_intensity, glfwGetTime());
         editor.CreateTextInput("3D Model File Path", &model_3D);
         editor.CreateBackgroundMenu("Background", background_color, show_skybox);
         editor.EndRender();
-        glfwSwapBuffers(window); 
+        glfwSwapBuffers(window.GetGLFWwindow()); 
         glfwPollEvents();
     }
 
     editor.Shutdown();
-    glfwTerminate();
 
     return 0;
 }
 
-static void frame_buffer_size_callback(GLFWwindow* window, int width, int height)
+static bool InitOpenGL()
 {
-    glViewport(0, 0, width, height);
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cerr << "Failed to initialize GLAD\n";
+        glfwTerminate();
+        return false;
+    }
+
+    std::cout << glGetString(GL_VERSION) << std::endl;
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glEnable(GL_MULTISAMPLE);
+    glDebugMessageCallback(DebugUtils::OpenGLMessageCallback, nullptr);
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    return true;
 }
 
 static void processInput(GLFWwindow* window)
