@@ -153,6 +153,18 @@ void Editor::CreatePointLightMenu(const char* title, PointLight *point_light)
     ImGui::End();
 }
 
+void Editor::CreateDirectionalLightMenu(const char* title, DirectionalLight* directional_light)
+{
+    ImGui::Begin(title);
+    if (ImGui::Button("On/Off"))
+    {
+        directional_light->Toggle();
+    }
+
+    ImGui::DragFloat3("Direction", &(directional_light->GetDirection().x), 0.1f, -100.0f, 100.0f);
+    ImGui::End();
+}
+
 void Editor::CreateFiltersMenu(const char* title, Shader& shader, int& filter_type, float& vignette_intensity, float& blur_intensity, float time)
 {
     ImGui::Begin(title);

@@ -158,6 +158,8 @@ int main()
         model_shader.SetUniformVec3f("point_light.diffuse", point_light.GetDiffuse());
         model_shader.SetUniformVec3f("point_light.ambient", point_light.GetAmbient());
         model_shader.SetUniformVec3f("point_light.position", point_light.GetModel().GetTransform().GetTranslation());
+        model_shader.SetUniform1f("directional_light.brightness", directional_light.GetBrightnessOffOn());
+        model_shader.SetUniformVec3f("directional_light.direction", directional_light.GetDirection());
 
         model_3D.GetTransform().UpdateMVP(camera.GetViewMatrix(), projection);
         model_shader.SetUniformMat4f("model", model_3D.GetTransform().GetModelMatrix());
@@ -183,6 +185,7 @@ int main()
         editor.CreateFiltersMenu("Filters", postprocessing_shader, filter_type, vignette_intensity, blur_intensity, glfwGetTime());
         editor.CreateTextInput("3D Model File Path", &model_3D);
         editor.CreateBackgroundMenu("Background", background_color, show_skybox);
+        editor.CreateDirectionalLightMenu("Directional Light", &directional_light);
         editor.EndRender();
         glfwSwapBuffers(window.GetGLFWwindow()); 
         glfwPollEvents();
