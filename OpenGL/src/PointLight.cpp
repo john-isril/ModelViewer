@@ -4,7 +4,6 @@ PointLight::PointLight(const std::string& path) :
 	Light(),
 	m_model{path}, m_constant{1.0f}, m_quadratic{0.032f}, m_linear{0.09}, m_is_hidden{false}
 {
-	m_is_on = false;
 	m_model.GetTransform().SetTranslation(glm::vec3{ 1.2f, 1.0f, 2.0f });
 	m_model.GetTransform().SetScale(glm::vec3{ 0.5f });
 }

@@ -12,7 +12,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "Input.h"
 #include "Renderer.h"
-#include "DebugUtils.h"
 #include "Camera.h"
 #include "Editor.h"
 #include "Model.h"
@@ -28,7 +27,6 @@ constexpr char GLSL_version[]{ "#version 460" };
 static float last_frame{ 0.0f };
 static float delta_time{ 0.0f };
 
-static bool InitOpenGL();
 static void processInput(GLFWwindow* window);
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
@@ -42,9 +40,10 @@ int main()
 
     editor.Init(window.GetGLFWwindow(), GLSL_version);
 
-    if (!InitOpenGL()) return -1;
+    Renderer renderer{};
 
-    Shader light_source_shader{ "Resources/light_source.shader" };
+    Shader light_sphere_shader{ "Resources/light_sphere.shader" };
+    Shader outline_shader{ "Resources/outline.shader" };
     Shader model_shader{ "Resources/model.shader" };
     Shader postprocessing_shader{ "Resources/postprocessing.shader" };
     Shader skybox_shader{ "Resources/skybox.shader" };
@@ -89,9 +88,7 @@ int main()
 
     //////////////////////////////////////////////////////////////////////// 3D MODEL ///////////////////////////////////////////////////////////////
     Model model_3D("Assets/backpack/backpack.obj");
-    Renderer renderer{};
 
-    glm::mat4 view{ 1.0f };
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(window.GetScreenWidth()) / static_cast<float>(window.GetScreenHeight()), 0.1f, 100.0f);
 
     model_shader.Bind();
@@ -137,23 +134,24 @@ int main()
         processInput(window.GetGLFWwindow());
 
         postprocess_frame_buffer.Bind();
-        renderer.Clear(background_color.r, background_color.g, background_color.b, 1.0f);
+        renderer.Clear(background_color, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        view = camera.GetViewMatrix();
+        point_light.GetModel().GetTransform().UpdateMVP(camera.GetViewMatrix(), projection);
 
-        point_light.GetModel().GetTransform().UpdateMVP(view, projection);
-
-        light_source_shader.Bind();
-        light_source_shader.SetUniformMat4f("mvp", point_light.GetModel().GetTransform().GetMVPMatrix());
-        light_source_shader.SetUniformVec3f("light_color", point_light.GetColor());
-        
         if (!point_light.GetIsHidden())
         {
-            renderer.DrawModel(point_light.GetModel(), light_source_shader);
+            renderer.EnableOutlining();
+
+            light_sphere_shader.Bind();
+            light_sphere_shader.SetUniformMat4f("mvp", point_light.GetModel().GetTransform().GetMVPMatrix());
+            light_sphere_shader.SetUniformVec3f("light_color", point_light.GetColor());
+            light_sphere_shader.SetUniform1f("light_brightness", point_light.GetBrightnessOffOn());
+            renderer.DrawModel(point_light.GetModel(), light_sphere_shader);
+
+            renderer.DrawModelOutline(point_light.GetModel(), camera.GetViewMatrix(), projection, outline_shader, 0.005f, glm::vec3{0.0f});
+            renderer.DisableOutlining();
         }
-        
-        light_source_shader.Bind();
-        light_source_shader.SetUniform1f("light_brightness", point_light.GetBrightnessOffOn());
+
         model_shader.Bind();
         model_shader.SetUniform1f("point_light.brightness", point_light.GetBrightnessOffOn());
 
@@ -161,13 +159,13 @@ int main()
         model_shader.SetUniformVec3f("point_light.ambient", point_light.GetAmbient());
         model_shader.SetUniformVec3f("point_light.position", point_light.GetModel().GetTransform().GetTranslation());
 
-        model_3D.GetTransform().UpdateMVP(view, projection);
+        model_3D.GetTransform().UpdateMVP(camera.GetViewMatrix(), projection);
         model_shader.SetUniformMat4f("model", model_3D.GetTransform().GetModelMatrix());
         model_shader.SetUniformMat4f("mvp", model_3D.GetTransform().GetMVPMatrix());
         model_shader.SetUniformVec3f("view_position", camera.GetPosition());
 
         renderer.DrawModel(model_3D, model_shader);
-
+        
         if (show_skybox)
         {
             renderer.DrawSkybox(skybox, camera.GetViewMatrix(), projection, skybox_shader);
@@ -193,27 +191,6 @@ int main()
     editor.Shutdown();
 
     return 0;
-}
-
-static bool InitOpenGL()
-{
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cerr << "Failed to initialize GLAD\n";
-        glfwTerminate();
-        return false;
-    }
-
-    std::cout << glGetString(GL_VERSION) << std::endl;
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glEnable(GL_MULTISAMPLE);
-    glDebugMessageCallback(DebugUtils::OpenGLMessageCallback, nullptr);
-    glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    return true;
 }
 
 static void processInput(GLFWwindow* window)

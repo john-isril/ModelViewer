@@ -66,6 +66,7 @@ public:
 	void UpdateMVP(const glm::mat4& view, const glm::mat4& projection);
 	const glm::mat4& GetModelMatrix() const;
 	const glm::mat4& GetMVPMatrix() const;
+	glm::mat4 GetScaledCopyMVP(float scale, const glm::mat4& view, const glm::mat4& projection) const;
 
 	~Transform();
 

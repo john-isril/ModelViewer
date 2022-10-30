@@ -261,6 +261,11 @@ const glm::mat4& Transform::GetMVPMatrix() const
 	return m_mvp_matrix;
 }
 
+glm::mat4 Transform::GetScaledCopyMVP(float scale, const glm::mat4& view, const glm::mat4& projection) const
+{
+	return projection * view * glm::scale(m_model_matrix, glm::vec3(scale, scale, scale));
+}
+
 Transform::~Transform()
 {
 }

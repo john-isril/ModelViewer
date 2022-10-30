@@ -1,22 +1,79 @@
 #include "Renderer.h"
 #include "glad/glad.h"
+#include <GLFW/glfw3.h>
 #include "VertexArray.h"
 #include "IndexBuffer.h"
 #include "Shader.h"
 #include "Texture.h"
 #include "Model.h"
+#include "DebugUtils.h"
 
-Renderer::Renderer() {}
+Renderer::Renderer() 
+{
+    Renderer::Init();
+}
+
+void Renderer::Init()
+{
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cerr << "Failed to initialize GLAD\n";
+        glfwTerminate();
+    }
+
+    std::cout << glGetString(GL_VERSION) << std::endl;
+
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glEnable(GL_MULTISAMPLE);
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); // if they pass (both stencil and depth tests) replace them with 1s
+    glDebugMessageCallback(DebugUtils::OpenGLMessageCallback, nullptr);
+}
 
 void Renderer::Clear()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void Renderer::Clear(float r, float g, float b, float a)
+void Renderer::Clear(const glm::vec3& color, uint64_t mask)
 {
-	glClearColor(r, g, b, a);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(color.r, color.g, color.b, 1.0f);
+	glClear(mask);
+}
+
+void Renderer::EnableStencilTest()
+{
+    glEnable(GL_STENCIL_TEST);
+}
+
+void Renderer::SetStencilFunc(GLenum func, GLint ref, GLuint mask)
+{
+    glStencilFunc(func, ref, mask);
+}
+
+void Renderer::SetStencilMask(GLuint mask)
+{
+    glStencilMask(mask);
+}
+
+void Renderer::DisableStencilTest()
+{
+    glDisable(GL_STENCIL_TEST);
+}
+
+void Renderer::EnableDepthTest()
+{
+    glEnable(GL_DEPTH_TEST);
+}
+
+void Renderer::DisableDepthTest()
+{
+    glDisable(GL_DEPTH_TEST);
 }
 
 void Renderer::DrawArrays(const VertexArray& va, const Shader& shader, uint32_t num_of_vertices)
@@ -105,6 +162,32 @@ void Renderer::DrawModel(const Model& model, Shader& shader)
 
     for (size_t i{ 0 }; i < meshes->size(); ++i)
         DrawMesh((*meshes)[i], shader);
+}
+
+void Renderer::DrawModelOutline(Model& model, const glm::mat4& view, const glm::mat4& projection, Shader& outline_shader, float outline_scale, const glm::vec3& outline_color)
+{
+    SetStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    SetStencilMask(0x00);
+    //DisableDepthTest();
+
+    outline_shader.Bind();
+    outline_shader.SetUniformMat4f("mvp", model.GetTransform().GetScaledCopyMVP(1.05, view, projection));
+    outline_shader.SetUniformVec3f("outline_color", outline_color);
+    outline_shader.SetUniform1f("outline_scale", outline_scale);
+    DrawModel(model, outline_shader);
+}
+
+void Renderer::EnableOutlining()
+{
+    SetStencilFunc(GL_ALWAYS, 1, 0xFF);
+    SetStencilMask(0xFF);
+}
+
+void Renderer::DisableOutlining()
+{
+    SetStencilMask(0xFF);
+    SetStencilFunc(GL_ALWAYS, 1, 0xFF);
+    EnableDepthTest();
 }
 
 void Renderer::DrawSkybox(Skybox& skybox, const glm::mat4& view, const glm::mat4& projection, Shader& shader)

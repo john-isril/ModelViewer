@@ -1365,11 +1365,12 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="Resources\lighting.shader" />
-    <None Include="Resources\light_source.shader" />
+    <None Include="Resources\light_sphere.shader" />
     <None Include="Resources\model.shader" />
     <None Include="assimp-vc143-mt.dll" />
     <None Include="Resources\postprocessing.shader" />
     <None Include="Resources\skybox.shader" />
+    <None Include="Resources\outline.shader" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="src\h.txt" />

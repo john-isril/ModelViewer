@@ -864,7 +864,8 @@
     <None Include="Dependencies\glm\glm\gtx\vector_query.inl" />
     <None Include="Dependencies\glm\glm\gtx\wrap.inl" />
     <None Include="Resources\lighting.shader" />
-    <None Include="Resources\light_source.shader" />
+    <None Include="Resources\light_sphere.shader" />
+    <None Include="Resources\outline.shader" />
     <None Include="Resources\model.shader" />
     <None Include="Resources\postprocessing.shader" />
     <None Include="Resources\skybox.shader" />
