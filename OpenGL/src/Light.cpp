@@ -6,22 +6,22 @@ Light::Light() :
 	this->UpdateColors();
 }
 
-glm::vec3& Light::GetColor()
+glm::vec4& Light::GetColor()
 {
 	return m_color;
 }
 
-const glm::vec3& Light::GetDiffuse() const
+const glm::vec4& Light::GetDiffuse() const
 {
 	return m_diffuse_color;
 }
 
-const glm::vec3& Light::GetSpecular() const
+const glm::vec4& Light::GetSpecular() const
 {
 	return m_specular_color;
 }
 
-const glm::vec3& Light::GetAmbient() const
+const glm::vec4& Light::GetAmbient() const
 {
 	return m_ambient_color;
 }
@@ -41,22 +41,22 @@ bool& Light::GetIsOn()
 	return m_is_on;
 }
 
-void Light::SetColor(const glm::vec3& color)
+void Light::SetColor(const glm::vec4& color)
 {
 	m_color = color;
 }
 
-void Light::SetDiffuse(const glm::vec3& diffuse)
+void Light::SetDiffuse(const glm::vec4& diffuse)
 {
 	m_diffuse_color = diffuse;
 }
 
-void Light::SetSpecular(const glm::vec3& specular)
+void Light::SetSpecular(const glm::vec4& specular)
 {
 	m_specular_color = specular;
 }
 
-void Light::SetAmbient(const glm::vec3& ambient)
+void Light::SetAmbient(const glm::vec4& ambient)
 {
 	m_ambient_color = ambient;
 }
@@ -68,8 +68,10 @@ void Light::SetBrightness(float brightness)
 
 void Light::UpdateColors()
 {
-	m_diffuse_color = m_color * glm::vec3(0.5f);
-	m_ambient_color = m_color * glm::vec3(0.2f);
+	m_diffuse_color = m_color * glm::vec4(0.5f);
+	m_color.a = 1.0f;
+	m_ambient_color = m_color * glm::vec4(0.2f);
+	m_ambient_color.a = 1.0f;
 }
 
 void Light::Toggle()

@@ -39,9 +39,9 @@ struct DirectionalLight
 	float brightness;
 
 	vec3 direction;
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
+	vec4 ambient;
+	vec4 diffuse;
+	vec4 specular;
 };
 
 struct PointLight
@@ -52,9 +52,9 @@ struct PointLight
 	float quadratic;
 
 	vec3 position;
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
+	vec4 ambient;
+	vec4 diffuse;
+	vec4 specular;
 };
 
 struct SpotLight
@@ -88,8 +88,8 @@ uniform vec3 object_color;
 uniform vec3 view_position;
 
 // function prototypes
-vec3 CalcDirectionalLight(DirectionalLight light, vec3 normal, vec3 view_direction);
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragment_position, vec3 view_direction);
+vec4 CalcDirectionalLight(DirectionalLight light, vec3 normal, vec3 view_direction);
+vec4 CalcPointLight(PointLight light, vec3 normal, vec3 fragment_position, vec3 view_direction);
 
 void main()
 {
@@ -97,45 +97,55 @@ void main()
 	vec3 object_normal = normalize(normal);
 	vec3 object_to_view_direction = normalize(view_position - fragment_position);
 
-	vec3 result = vec3(0.0, 0.0, 0.0);
+	vec4 result = vec4(0.0, 0.0, 0.0, 0.0);
 	result += CalcDirectionalLight(directional_light, object_normal, object_to_view_direction);
 	result += CalcPointLight(point_light, object_normal, fragment_position, object_to_view_direction);
 
-	FragColor = vec4(result, 1.0);
+	FragColor = result;
 };
 
-vec3 CalcDirectionalLight(DirectionalLight light, vec3 normal, vec3 view_direction)
+vec4 CalcDirectionalLight(DirectionalLight light, vec3 normal, vec3 view_direction)
 {
 	vec3 object_to_light_direction = normalize(-light.direction);
 
-	vec3 ambient_light = light.ambient * vec3(texture(material.diffuse1, texture_coordinates));
+	vec4 ambient_light = light.ambient * texture(material.diffuse1, texture_coordinates);
+
+	if (ambient_light.a < 0.1)
+	{
+		discard;
+	}
 
 	float diffuse_strength = max(dot(normal, object_to_light_direction), 0.0);
-	vec3 diffuse_light = light.diffuse * vec3(texture(material.diffuse1, texture_coordinates)) * diffuse_strength;
+	vec4 diffuse_light = light.diffuse * texture(material.diffuse1, texture_coordinates) * diffuse_strength;
 
 	vec3 light_reflection_direction = reflect(object_to_light_direction, normal);
 	float specular_strength = pow(max(dot(view_direction, light_reflection_direction), 0.0), material.shininess);
-	vec3 specular_light = specular_strength * light.specular * vec3(texture(material.specular1, texture_coordinates));
+	vec4 specular_light = specular_strength * light.specular * texture(material.specular1, texture_coordinates);
 
 	return ambient_light + (light.brightness * (diffuse_light + specular_light));
 }
 
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragment_position, vec3 view_direction)
+vec4 CalcPointLight(PointLight light, vec3 normal, vec3 fragment_position, vec3 view_direction)
 {
 	vec3 object_to_light_direction = normalize(light.position - fragment_position);
 
 	// ambient
-	vec3 ambient_light = light.ambient * vec3(texture(material.diffuse1, texture_coordinates));
+	vec4 ambient_light = light.ambient * texture(material.diffuse1, texture_coordinates);
+	
+	if (ambient_light.a < 0.1)
+	{
+		discard;
+	}
 
 	// diffuse
 	float diffuse_strength = max(dot(normal, object_to_light_direction), 0.0);
-	vec3 diffuse_light = light.diffuse * diffuse_strength * vec3(texture(material.diffuse1, texture_coordinates));
+	vec4 diffuse_light = light.diffuse * diffuse_strength * texture(material.diffuse1, texture_coordinates);
 
 	// specular
 	vec3 light_reflection_direction = reflect(-object_to_light_direction, normal);
 	float specular_strength = pow(max(dot(view_direction, light_reflection_direction), 0.0), material.shininess);
 
-	vec3 specular_light = specular_strength * light.specular * vec3(texture(material.specular1, texture_coordinates));
+	vec4 specular_light = specular_strength * light.specular * texture(material.specular1, texture_coordinates);
 
 	float distance = length(light.position - fragment_position);
 	float attenuation = 1.0 / (light.constant + light.linear_ * distance + light.quadratic * (distance * distance));

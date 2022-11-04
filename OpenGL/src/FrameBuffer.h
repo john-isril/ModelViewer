@@ -17,6 +17,7 @@ public:
 	void Bind() const;
 	void BindTextureColorBuffer() const;
 	void Unbind() const;
+	void Resize(uint32_t width, uint32_t height);
 
 	uint32_t GetTextureColorBufferID() const;
 };

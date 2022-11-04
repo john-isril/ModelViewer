@@ -17,11 +17,11 @@ void main()
 
 out vec4 FragColor;
 
-uniform vec3 light_color;
+uniform vec4 light_color;
 uniform float light_brightness;
 
 void main()
 {
-	FragColor = vec4(light_brightness * light_color, 1.0);
+	FragColor = light_brightness * light_color;
 };
 

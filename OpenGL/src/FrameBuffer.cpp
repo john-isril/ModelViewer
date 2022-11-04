@@ -22,7 +22,7 @@ FrameBuffer::FrameBuffer(uint32_t width, uint32_t height) :
     
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
-        std::cout << "ERROR::FRAMEBUFFER:: Incomplete Frame Buffer" << std::endl;
+        std::cerr << "ERROR::FRAMEBUFFER:: Incomplete Frame Buffer" << std::endl;
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -50,6 +50,14 @@ void FrameBuffer::Unbind() const
     glDisable(GL_DEPTH_TEST);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void FrameBuffer::Resize(uint32_t width, uint32_t height)
+{
+    m_width = width;
+    m_height = height;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
 }
 
 uint32_t FrameBuffer::GetTextureColorBufferID() const

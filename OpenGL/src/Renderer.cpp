@@ -29,6 +29,9 @@ void Renderer::Init()
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+    glFrontFace(GL_CW);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); // if they pass (both stencil and depth tests) replace them with 1s
@@ -104,6 +107,7 @@ void Renderer::DrawMesh(const Mesh& mesh, Shader &shader)
     uint32_t normal_texture_num{ 1 };
     uint32_t height_texture_num{ 1 };
     uint32_t roughness_texture_num{ 1 };
+    uint32_t alpha_texture_num{ 1 };
     const std::vector<Texture>* textures{ mesh.GetTextures() };
 
     for (size_t i{ 0 }; i < textures->size(); ++i)
@@ -114,6 +118,7 @@ void Renderer::DrawMesh(const Mesh& mesh, Shader &shader)
         char normal_texture_uniform_name[]{ "material.normal0" };
         char height_texture_uniform_name[]{ "material.height0" };
         char roughness_texture_uniform_name[]{ "material.roughness0" };
+        char alpha_texture_uniform_name[]{ "material.alpha0" };
 
         switch ((*textures)[i].GetType())
         {
@@ -140,6 +145,11 @@ void Renderer::DrawMesh(const Mesh& mesh, Shader &shader)
         case Texture::Type::Roughness:
             roughness_texture_uniform_name[18] = '0' + roughness_texture_num++;
             shader.SetUniform1i(roughness_texture_uniform_name, i);
+            break;
+
+        case Texture::Type::Alpha:
+            alpha_texture_uniform_name[14] = '0' + alpha_texture_num++;
+            shader.SetUniform1i(alpha_texture_uniform_name, i);
             break;
 
         default:

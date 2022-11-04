@@ -14,6 +14,7 @@ public:
 		Height,
 		Roughness,
 		CubeMap,
+		Alpha,
 
 		None
 	};

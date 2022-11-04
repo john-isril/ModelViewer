@@ -29,16 +29,18 @@ static float delta_time{ 0.0f };
 
 static void processInput(GLFWwindow* window);
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+static void UpdateWindowDimensionDependencies(uint32_t& window_width, uint32_t& window_height, glm::mat4& projection_matrix, Window* window, Camera* camera = nullptr, FrameBuffer* fame_buffer = nullptr);
 
 static Camera camera{ Transform{glm::vec3 {0.0f}, Rotation{0.0f, -90.0f, 0.0f}, glm::vec3 {0.0f, 0.0f, 3.0f}} };
-static Editor editor{};
 
 int main()
 {
     Window window{ "3D Model Viewer" };
     window.SetScrollCallback(scroll_callback);
+    uint32_t current_window_width{ window.GetScreenWidth() };
+    uint32_t current_window_height{ window.GetScreenHeight() };
 
-    editor.Init(window.GetGLFWwindow(), GLSL_version);
+    Editor::Init(window.GetGLFWwindow(), GLSL_version);
 
     Renderer renderer{};
 
@@ -48,6 +50,9 @@ int main()
     Shader postprocessing_shader{ "Resources/postprocessing.shader" };
     Shader skybox_shader{ "Resources/skybox.shader" };
 
+    float field_of_view{ 45.0f };
+    glm::mat4 projection{ glm::perspective(glm::radians(field_of_view), static_cast<float>(window.GetScreenWidth()) / static_cast<float>(window.GetScreenHeight()), 0.1f, 100.0f) };
+
     ////////////////////////////////////////////////////////////////////////////////////////// LIGHTS ///////////////////////////////////////////////////////////////////////////////////////
 
     PointLight point_light{ "Assets/sphere/sphere.obj" };
@@ -56,7 +61,7 @@ int main()
     ////////////////////////////////////////////////////////// POST PROCESSING SCREEN QUAD /////////////////////////////////////////////////
     constexpr uint8_t NUM_OF_SCREEN_QUAD_VERTICES{ 6 };
 
-    float screen_quad_vertices[] = {
+    float screen_quad_vertices[] {
         // positions   // texture coordinates
         -1.0f,  1.0f,  0.0f, 1.0f,
         -1.0f, -1.0f,  0.0f, 0.0f,
@@ -89,25 +94,22 @@ int main()
     //////////////////////////////////////////////////////////////////////// 3D MODEL ///////////////////////////////////////////////////////////////
     Model model_3D("Assets/backpack/backpack.obj");
 
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(window.GetScreenWidth()) / static_cast<float>(window.GetScreenHeight()), 0.1f, 100.0f);
-
     model_shader.Bind();
     
     model_shader.SetUniform1f("directional_light.brightness", directional_light.GetBrightness());
     model_shader.SetUniformVec3f("directional_light.direction", directional_light.GetDirection());
-    model_shader.SetUniformVec3f("directional_light.ambient", directional_light.GetAmbient());
-    model_shader.SetUniformVec3f("directional_light.diffuse", directional_light.GetDiffuse());
-    model_shader.SetUniformVec3f("directional_light.specular", directional_light.GetSpecular());
+    model_shader.SetUniformVec4f("directional_light.ambient", directional_light.GetAmbient());
+    model_shader.SetUniformVec4f("directional_light.diffuse", directional_light.GetDiffuse());
+    model_shader.SetUniformVec4f("directional_light.specular", directional_light.GetSpecular());
 
-    
     model_shader.SetUniform1f("point_light.brightness", point_light.GetBrightness());
     model_shader.SetUniform1f("point_light.constant", point_light.GetConstant());
     model_shader.SetUniform1f("point_light.linear_", point_light.GetLinear());
     model_shader.SetUniform1f("point_light.quadratic", point_light.GetQuadratic());
     model_shader.SetUniformVec3f("point_light.position", point_light.GetModel().GetTransform().GetTranslation());
-    model_shader.SetUniformVec3f("point_light.ambient", point_light.GetAmbient());
-    model_shader.SetUniformVec3f("point_light.diffuse", point_light.GetDiffuse());
-    model_shader.SetUniformVec3f("point_light.specular", point_light.GetSpecular());
+    model_shader.SetUniformVec4f("point_light.ambient", point_light.GetAmbient());
+    model_shader.SetUniformVec4f("point_light.diffuse", point_light.GetDiffuse());
+    model_shader.SetUniformVec4f("point_light.specular", point_light.GetSpecular());
     model_shader.SetUniform1f("material.shininess", 16.0f);
 
     postprocessing_shader.Bind();
@@ -118,17 +120,12 @@ int main()
     skybox_shader.Bind();
     skybox_shader.SetUniform1i("skybox", 0);
 
-    // Would like to use an enum for this, however, GLSL has no support for enums so I'll be using an int instead.
-    // DearIMGui also expects an int when using the radio button feature.
-    int filter_type{0};
-    float vignette_intensity{1.0f};
-    float blur_intensity{ 0.07f };
-    bool show_skybox{ true };
     glm::vec3 background_color{ 1.0f, 1.0f, 1.0f };
 
     while (!window.Closed())
     {
-        float current_frame = static_cast<float>(glfwGetTime());
+        float current_frame{ static_cast<float>(glfwGetTime()) };
+
         delta_time = current_frame - last_frame;
         last_frame = current_frame;
         processInput(window.GetGLFWwindow());
@@ -136,6 +133,8 @@ int main()
         postprocess_frame_buffer.Bind();
         renderer.Clear(background_color, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+        UpdateWindowDimensionDependencies(current_window_width, current_window_height, projection, &window, &camera, &postprocess_frame_buffer);
+        
         point_light.GetModel().GetTransform().UpdateMVP(camera.GetViewMatrix(), projection);
 
         if (!point_light.GetIsHidden())
@@ -144,7 +143,7 @@ int main()
 
             light_sphere_shader.Bind();
             light_sphere_shader.SetUniformMat4f("mvp", point_light.GetModel().GetTransform().GetMVPMatrix());
-            light_sphere_shader.SetUniformVec3f("light_color", point_light.GetColor());
+            light_sphere_shader.SetUniformVec4f("light_color", point_light.GetColor());
             light_sphere_shader.SetUniform1f("light_brightness", point_light.GetBrightnessOffOn());
             renderer.DrawModel(point_light.GetModel(), light_sphere_shader);
 
@@ -155,8 +154,8 @@ int main()
         model_shader.Bind();
         model_shader.SetUniform1f("point_light.brightness", point_light.GetBrightnessOffOn());
 
-        model_shader.SetUniformVec3f("point_light.diffuse", point_light.GetDiffuse());
-        model_shader.SetUniformVec3f("point_light.ambient", point_light.GetAmbient());
+        model_shader.SetUniformVec4f("point_light.diffuse", point_light.GetDiffuse());
+        model_shader.SetUniformVec4f("point_light.ambient", point_light.GetAmbient());
         model_shader.SetUniformVec3f("point_light.position", point_light.GetModel().GetTransform().GetTranslation());
         model_shader.SetUniform1f("directional_light.brightness", directional_light.GetBrightnessOffOn());
         model_shader.SetUniformVec3f("directional_light.direction", directional_light.GetDirection());
@@ -168,7 +167,7 @@ int main()
 
         renderer.DrawModel(model_3D, model_shader);
         
-        if (show_skybox)
+        if (Editor::ShowSkybox())
         {
             renderer.DrawSkybox(skybox, camera.GetViewMatrix(), projection, skybox_shader);
         }
@@ -179,19 +178,19 @@ int main()
         
         renderer.DrawArrays(screen_quad_VAO, postprocessing_shader, NUM_OF_SCREEN_QUAD_VERTICES);
 
-        editor.BeginRender();
-        editor.CreateTransformMenu("3D Model", &(model_3D.GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE);
-        editor.CreatePointLightMenu("Point Light", &point_light);
-        editor.CreateFiltersMenu("Filters", postprocessing_shader, filter_type, vignette_intensity, blur_intensity, glfwGetTime());
-        editor.CreateTextInput("3D Model File Path", &model_3D);
-        editor.CreateBackgroundMenu("Background", background_color, show_skybox);
-        editor.CreateDirectionalLightMenu("Directional Light", &directional_light);
-        editor.EndRender();
+        Editor::BeginRender();
+        Editor::CreateTransformMenu("3D Model", &(model_3D.GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE);
+        Editor::CreatePointLightMenu("Point Light", &point_light);
+        Editor::CreateFiltersMenu("Filters", postprocessing_shader, glfwGetTime());
+        Editor::CreateTextInput("3D Model File Path", &model_3D);
+        Editor::CreateBackgroundMenu("Background", background_color);
+        Editor::CreateDirectionalLightMenu("Directional Light", &directional_light);
+        Editor::EndRender();
         glfwSwapBuffers(window.GetGLFWwindow()); 
         glfwPollEvents();
     }
 
-    editor.Shutdown();
+    Editor::Shutdown();
 
     return 0;
 }
@@ -204,7 +203,7 @@ static void processInput(GLFWwindow* window)
         return;
     }
 
-    if (!editor.MouseIsOnEditor())
+    if (!Editor::MouseIsOnEditor())
     {
         Camera::State last_camera_state{ camera.GetState() };
         camera.ProcessMouseButtonPress(Input::IsMouseButtonPressed(window, Mouse::LeftClick), Input::IsMouseButtonPressed(window, Mouse::RightClick));
@@ -234,9 +233,28 @@ static void processInput(GLFWwindow* window)
 
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    if (!editor.MouseIsOnEditor())
+    if (!Editor::MouseIsOnEditor())
     {
         float z_offset = static_cast<float>(yoffset) * 400.0f;
         camera.Walk(0.0f, z_offset, delta_time);
+    }
+}
+
+static void UpdateWindowDimensionDependencies(uint32_t & window_width, uint32_t & window_height, glm::mat4 &projection_matrix, Window *window, Camera *camera, FrameBuffer *fame_buffer)
+{
+    if (window && ((window_width != window->GetScreenWidth()) || (window_height != window->GetScreenHeight())))
+    {
+        window_width = window->GetScreenWidth();
+        window_height = window->GetScreenHeight();
+
+        if (camera)
+        {
+            projection_matrix = glm::perspective(glm::radians(camera->GetFieldOfView()), static_cast<float>(window->GetScreenWidth()) / static_cast<float>(window->GetScreenHeight()), camera->GetNearPlaneDistance(), camera->GetFarPlaneDistance());
+        }
+
+        if (fame_buffer)
+        {
+            fame_buffer->Resize(window_width, window_height);
+        }
     }
 }

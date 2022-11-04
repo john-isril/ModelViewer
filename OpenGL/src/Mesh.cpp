@@ -116,7 +116,8 @@ Mesh::Mesh(aiMesh* mesh, const aiScene* scene, std::unordered_set<std::string>& 
     LoadMaterialTextures(material, aiTextureType_HEIGHT, loaded_textures_file_names, Texture::Type::Normal, directory);
     LoadMaterialTextures(material, aiTextureType_AMBIENT, loaded_textures_file_names, Texture::Type::Height, directory);
     LoadMaterialTextures(material, aiTextureType_DIFFUSE_ROUGHNESS, loaded_textures_file_names, Texture::Type::Roughness, directory);
-    
+    LoadMaterialTextures(material, aiTextureType_OPACITY, loaded_textures_file_names, Texture::Type::Alpha, directory);
+
     m_VBO.BindBufferData(&m_vertices[0], m_vertices.size() * sizeof(Vertex));
     m_IBO.BindBufferData(&m_indices[0], m_indices.size());
 

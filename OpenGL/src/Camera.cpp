@@ -1,8 +1,10 @@
 #include "Camera.h"
 
 Camera::Camera(const Transform& transform, glm::vec3 world_up,
-    float translation_speed, float rotation_sensitivity) :
-    m_state{ Camera::State::None }, m_translation_speed{ translation_speed }, m_rotation_sensitivity{ rotation_sensitivity }, last_mouse_x_pos{}, last_mouse_y_pos{}, first_mouse{ true },
+    float translation_speed, float rotation_sensitivity, float field_of_view, float near_plane_distance, float far_plane_distance) :
+    m_state{ Camera::State::None }, m_translation_speed{ translation_speed }, m_rotation_sensitivity{ rotation_sensitivity }, 
+    m_field_of_view{ field_of_view }, m_near_plane_distance{ near_plane_distance }, m_far_plane_distance{far_plane_distance},
+    last_mouse_x_pos{}, last_mouse_y_pos{}, first_mouse{ true },
     m_transform{ transform }, m_world_up{ world_up }
 {
     this->UpdateVectors();
@@ -126,9 +128,39 @@ const glm::vec3& Camera::GetForward() const
     return m_forward;
 }
 
+float Camera::GetFieldOfView() const
+{
+    return m_field_of_view;
+}
+
+float Camera::GetFarPlaneDistance() const
+{
+    return m_far_plane_distance;
+}
+
+float Camera::GetNearPlaneDistance() const
+{
+    return m_near_plane_distance;
+}
+
 void Camera::SetState(Camera::State state)
 {
     m_state = state;
+}
+
+void Camera::SetFieldOfView(float field_of_view)
+{
+    m_field_of_view = field_of_view;
+}
+
+void Camera::SetNearPlaneDistance(float near_plane_distance)
+{
+    m_near_plane_distance = near_plane_distance;
+}
+
+void Camera::SetFarPlaneDistance(float far_plane_distance)
+{
+    m_far_plane_distance = far_plane_distance;
 }
 
 void Camera::UpdateVectors()

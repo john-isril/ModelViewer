@@ -78,6 +78,11 @@ void Shader::SetUniformVec3f(const char* name, const glm::vec3& value)
     glUniform3fv(GetUniformLocation(name), 1, &value[0]);
 }
 
+void Shader::SetUniformVec4f(const char* name, const glm::vec4& value)
+{
+    glUniform4fv(GetUniformLocation(name), 1, &value[0]);
+}
+
 void Unbind()
 {
     glUseProgram(0);

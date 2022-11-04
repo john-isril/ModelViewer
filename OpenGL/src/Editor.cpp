@@ -6,15 +6,84 @@
 #include "Model.h"
 
 char model_input_buffer[160]{};
-Editor::Editor()
+
+Editor Editor::m_instance;
+
+void Editor::Init(GLFWwindow* window, const char* GLSL_version)
 {
+    Get().InitImpl(window, GLSL_version);
+}
+
+void Editor::BeginRender()
+{
+    Get().BeginRenderImpl();
+}
+
+void Editor::EndRender()
+{
+    Get().EndRenderImpl();
+}
+
+void Editor::Shutdown()
+{
+    Get().Shutdown();
+}
+
+void Editor::CreateTransformMenu(const char* title, Transform* transform, uint8_t transform_flags)
+{
+    Get().CreateTransformMenuImpl(title, transform, transform_flags);
+}
+
+void Editor::CreatePointLightMenu(const char* title, PointLight* point_light)
+{
+    Get().CreatePointLightMenuImpl(title, point_light);
+}
+
+void Editor::CreateDirectionalLightMenu(const char* title, DirectionalLight* directional_light)
+{
+    Get().CreateDirectionalLightMenuImpl(title, directional_light);
+}
+
+void Editor::CreateFiltersMenu(const char* title, Shader& shader, float time)
+{
+    Get().CreateFiltersMenuImpl(title, shader, time);
+}
+
+void Editor::CreateBackgroundMenu(const char* title, glm::vec3& color)
+{
+    Get().CreateBackgroundMenuImpl(title, color);
+}
+
+void Editor::CreateTextInput(const char* title, Model* model)
+{
+    Get().CreateTextInputImpl(title, model);
+}
+
+bool Editor::MouseIsOnEditor()
+{
+    return Get().MouseIsOnEditorImpl();
+}
+
+bool Editor::ShowSkybox()
+{
+    return Get().ShowSkyboxImpl();
 }
 
 Editor::~Editor()
 {
 }
 
-void Editor::Init(GLFWwindow* window, const char* GLSL_version)
+Editor::Editor() :
+    m_filter_type{0}, m_vignette_intensity{1.0f}, m_blur_intensity{0.07f}, m_show_skybox{true}
+{
+}
+
+Editor& Editor::Get()
+{
+    return m_instance;
+}
+
+void Editor::InitImpl(GLFWwindow* window, const char* GLSL_version)
 {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -59,7 +128,7 @@ void Editor::Init(GLFWwindow* window, const char* GLSL_version)
     //IM_ASSERT(font != NULL);
 }
 
-void Editor::BeginRender()
+void Editor::BeginRenderImpl()
 {
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
@@ -70,7 +139,7 @@ void Editor::BeginRender()
     //ImGui::ShowDemoWindow(&show_demo_window);
 }
 
-void Editor::EndRender()
+void Editor::EndRenderImpl()
 {
     // Rendering
     ImGui::Render();
@@ -89,7 +158,7 @@ void Editor::EndRender()
     }
 }
 
-void Editor::Shutdown()
+void Editor::ShutdownImpl()
 {
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
@@ -97,7 +166,7 @@ void Editor::Shutdown()
     ImGui::DestroyContext();
 }
 
-void Editor::CreateTransformMenu(const char* title, Transform *transform, uint8_t transform_flags)
+void Editor::CreateTransformMenuImpl(const char* title, Transform *transform, uint8_t transform_flags)
 {
     ImGui::Begin(title);
     ImGui::Text("Transform");
@@ -135,7 +204,7 @@ void Editor::CreateTransformMenu(const char* title, Transform *transform, uint8_
     ImGui::End();
 }
 
-void Editor::CreatePointLightMenu(const char* title, PointLight *point_light)
+void Editor::CreatePointLightMenuImpl(const char* title, PointLight *point_light)
 {
     ImGui::Begin(title);
     if (ImGui::Button("On/Off"))
@@ -148,12 +217,12 @@ void Editor::CreatePointLightMenu(const char* title, PointLight *point_light)
     }
     ImGui::DragFloat("Brightness", &(point_light->GetBrightness()), 0.1f, 0.0f, 10.0f);
     ImGui::ColorEdit3("Color", (float*)(&(point_light->GetColor())));
-    CreateTransformMenu(title, &(point_light->GetModel().GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE | TRANSFORM_SCALE_UNIFORM);
+    CreateTransformMenuImpl(title, &(point_light->GetModel().GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE | TRANSFORM_SCALE_UNIFORM);
     point_light->UpdateColors();
     ImGui::End();
 }
 
-void Editor::CreateDirectionalLightMenu(const char* title, DirectionalLight* directional_light)
+void Editor::CreateDirectionalLightMenuImpl(const char* title, DirectionalLight* directional_light)
 {
     ImGui::Begin(title);
     if (ImGui::Button("On/Off"))
@@ -165,35 +234,35 @@ void Editor::CreateDirectionalLightMenu(const char* title, DirectionalLight* dir
     ImGui::End();
 }
 
-void Editor::CreateFiltersMenu(const char* title, Shader& shader, int& filter_type, float& vignette_intensity, float& blur_intensity, float time)
+void Editor::CreateFiltersMenuImpl(const char* title, Shader& shader, float time)
 {
     ImGui::Begin(title);
-    ImGui::RadioButton("Normal", &filter_type, 0);
-    ImGui::RadioButton("Inverted", &filter_type, 1);
-    ImGui::RadioButton("Greyscale", &filter_type, 2);
-    ImGui::RadioButton("Vignette", &filter_type, 3);
-    ImGui::DragFloat("Vignette Intensity", &vignette_intensity, 0.1f, 0.0f, 2.0f);
-    ImGui::RadioButton("Blur Sweep", &filter_type, 4);
-    ImGui::DragFloat("Blur Intensity", &blur_intensity, 0.001f, 0.0f, 0.07f);
+    ImGui::RadioButton("Normal", &Get().m_filter_type, 0);
+    ImGui::RadioButton("Inverted", &Get().m_filter_type, 1);
+    ImGui::RadioButton("Greyscale", &Get().m_filter_type, 2);
+    ImGui::RadioButton("Vignette", &Get().m_filter_type, 3);
+    ImGui::DragFloat("Vignette Intensity", &Get().m_vignette_intensity, 0.1f, 0.0f, 2.0f);
+    ImGui::RadioButton("Blur Sweep", &Get().m_filter_type, 4);
+    ImGui::DragFloat("Blur Intensity", &Get().m_blur_intensity, 0.001f, 0.0f, 0.07f);
     ImGui::End();
-    shader.SetUniform1i("filter_type", filter_type);
-    shader.SetUniform1f("vignette_intensity", vignette_intensity);
+    shader.SetUniform1i("filter_type", Get().m_filter_type);
+    shader.SetUniform1f("vignette_intensity", Get().m_vignette_intensity);
     shader.SetUniform1f("time", time);
-    shader.SetUniform1f("blur_intensity", blur_intensity);
+    shader.SetUniform1f("blur_intensity", Get().m_blur_intensity);
 }
 
-void Editor::CreateBackgroundMenu(const char* title, glm::vec3& color, bool& show_skybox)
+void Editor::CreateBackgroundMenuImpl(const char* title, glm::vec3& color)
 {
     ImGui::Begin(title);
     if (ImGui::Button("Show Skybox"))
     {
-        show_skybox = 1 - show_skybox;
+        Get().ToggleSkybox();
     }
-    ImGui::ColorEdit3("Color", (float*)&color);
+    ImGui::ColorEdit3("Color", (float*)&(color));
     ImGui::End();
 }
 
-void Editor::CreateTextInput(const char* title, Model *model)
+void Editor::CreateTextInputImpl(const char* title, Model *model)
 {
     ImGui::Begin(title);
     ImGui::InputText(title, model_input_buffer, 160);
@@ -206,7 +275,17 @@ void Editor::CreateTextInput(const char* title, Model *model)
     ImGui::End();
 }
 
-bool Editor::MouseIsOnEditor()
+bool Editor::MouseIsOnEditorImpl()
 {
     return ImGui::GetIO().WantCaptureMouse;
+}
+
+bool Editor::ShowSkyboxImpl()
+{
+    return Get().m_show_skybox;
+}
+
+void Editor::ToggleSkybox()
+{
+    Get().m_show_skybox = 1 - (Get().m_show_skybox);
 }
