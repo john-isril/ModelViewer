@@ -131,7 +131,7 @@ int main()
         postprocess_frame_buffer.Bind();
         renderer.Clear(background_color, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        // UpdateWindowDimensionDependencies(projection, &window, &camera, &postprocess_frame_buffer);
+         UpdateWindowDimensionDependencies(projection, &window, &camera, &postprocess_frame_buffer);
         
         point_light.GetModel().GetTransform().UpdateMVP(camera.GetViewMatrix(), projection);
 
@@ -248,11 +248,6 @@ static void UpdateWindowDimensionDependencies(glm::mat4 &projection_matrix, Wind
     {
         current_window_width = window->GetScreenWidth();
         current_window_height = window->GetScreenHeight();
-
-        if (camera)
-        {
-            projection_matrix = glm::perspective(glm::radians(camera->GetFieldOfView()), static_cast<float>(window->GetScreenWidth()) / static_cast<float>(window->GetScreenHeight()), camera->GetNearPlaneDistance(), camera->GetFarPlaneDistance());
-        }
 
         if (fame_buffer)
         {

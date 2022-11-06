@@ -318,13 +318,13 @@ void Editor::CreateTextInputImpl(const char* title, Model *model)
 void Editor::CreateViewWindowImpl(const char* title, glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer)
 {
     static ImVec2 image_size{};
+    static glm::vec2 current_window_size{};
+    static glm::vec2 last_window_size{};
+
     constexpr ImVec2 uv_x{ 0, 1 };
     constexpr ImVec2 uv_y{ 1, 0 };
 
-    if (ImGui::Begin(title))
-    {
-        ImGui::CaptureKeyboardFromApp(false);
-    }
+    ImGui::Begin(title);
 
     ImVec2 panel_size{ ImGui::GetWindowSize() };
     panel_size.y -= 35;
@@ -334,6 +334,9 @@ void Editor::CreateViewWindowImpl(const char* title, glm::mat4& projection_matri
         image_size = panel_size;
         projection_matrix = glm::perspective(glm::radians(camera->GetFieldOfView()), static_cast<float>(image_size.x) / static_cast<float>(image_size.y), camera->GetNearPlaneDistance(), camera->GetFarPlaneDistance());
     }
+
+ //   image_size.x += (current_window_size.x - last_window_size.x);
+
 
     ImGui::Image((void*)(intptr_t)frame_buffer->GetTextureColorBufferID(), image_size, uv_x, uv_y);
 
