@@ -29,7 +29,7 @@ static float delta_time{ 0.0f };
 
 static void processInput(GLFWwindow* window);
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-static void UpdateWindowDimensionDependencies(uint32_t& window_width, uint32_t& window_height, glm::mat4& projection_matrix, Window* window, Camera* camera = nullptr, FrameBuffer* fame_buffer = nullptr);
+static void UpdateWindowDimensionDependencies(glm::mat4& projection_matrix, Window* window, Camera* camera = nullptr, FrameBuffer* fame_buffer = nullptr);
 
 static Camera camera{ Transform{glm::vec3 {0.0f}, Rotation{0.0f, -90.0f, 0.0f}, glm::vec3 {0.0f, 0.0f, 3.0f}} };
 
@@ -37,8 +37,6 @@ int main()
 {
     Window window{ "3D Model Viewer" };
     window.SetScrollCallback(scroll_callback);
-    uint32_t current_window_width{ window.GetScreenWidth() };
-    uint32_t current_window_height{ window.GetScreenHeight() };
 
     Editor::Init(window.GetGLFWwindow(), GLSL_version);
 
@@ -133,7 +131,7 @@ int main()
         postprocess_frame_buffer.Bind();
         renderer.Clear(background_color, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        UpdateWindowDimensionDependencies(current_window_width, current_window_height, projection, &window, &camera, &postprocess_frame_buffer);
+        // UpdateWindowDimensionDependencies(projection, &window, &camera, &postprocess_frame_buffer);
         
         point_light.GetModel().GetTransform().UpdateMVP(camera.GetViewMatrix(), projection);
 
@@ -179,6 +177,7 @@ int main()
         renderer.DrawArrays(screen_quad_VAO, postprocessing_shader, NUM_OF_SCREEN_QUAD_VERTICES);
 
         Editor::BeginRender();
+        Editor::CreateViewWindow("Viewport", projection, &window, &camera, &postprocess_frame_buffer);
         Editor::CreateTransformMenu("3D Model", &(model_3D.GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE);
         Editor::CreatePointLightMenu("Point Light", &point_light);
         Editor::CreateFiltersMenu("Filters", postprocessing_shader, glfwGetTime());
@@ -186,8 +185,8 @@ int main()
         Editor::CreateBackgroundMenu("Background", background_color);
         Editor::CreateDirectionalLightMenu("Directional Light", &directional_light);
         Editor::EndRender();
-        glfwSwapBuffers(window.GetGLFWwindow()); 
-        glfwPollEvents();
+
+        window.Update();
     }
 
     Editor::Shutdown();
@@ -196,14 +195,14 @@ int main()
 }
 
 static void processInput(GLFWwindow* window)
-{
+{ 
     if (Input::IsKeyPressed(window, Key::Escape))
     {
         glfwSetWindowShouldClose(window, true);
         return;
     }
 
-    if (!Editor::MouseIsOnEditor())
+    if (Editor::ViewportSelected())
     {
         Camera::State last_camera_state{ camera.GetState() };
         camera.ProcessMouseButtonPress(Input::IsMouseButtonPressed(window, Mouse::LeftClick), Input::IsMouseButtonPressed(window, Mouse::RightClick));
@@ -233,19 +232,22 @@ static void processInput(GLFWwindow* window)
 
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    if (!Editor::MouseIsOnEditor())
+    if (Editor::ViewportHovered())
     {
-        float z_offset = static_cast<float>(yoffset) * 400.0f;
+        float z_offset{ static_cast<float>(yoffset) * 400.0f };
         camera.Walk(0.0f, z_offset, delta_time);
     }
 }
 
-static void UpdateWindowDimensionDependencies(uint32_t & window_width, uint32_t & window_height, glm::mat4 &projection_matrix, Window *window, Camera *camera, FrameBuffer *fame_buffer)
+static void UpdateWindowDimensionDependencies(glm::mat4 &projection_matrix, Window *window, Camera *camera, FrameBuffer *fame_buffer)
 {
-    if (window && ((window_width != window->GetScreenWidth()) || (window_height != window->GetScreenHeight())))
+    static uint32_t current_window_width{};
+    static uint32_t current_window_height{};
+
+    if (window && ((current_window_width != window->GetScreenWidth()) || (current_window_height != window->GetScreenHeight())))
     {
-        window_width = window->GetScreenWidth();
-        window_height = window->GetScreenHeight();
+        current_window_width = window->GetScreenWidth();
+        current_window_height = window->GetScreenHeight();
 
         if (camera)
         {
@@ -254,7 +256,7 @@ static void UpdateWindowDimensionDependencies(uint32_t & window_width, uint32_t 
 
         if (fame_buffer)
         {
-            fame_buffer->Resize(window_width, window_height);
+            fame_buffer->Resize(current_window_width, current_window_height);
         }
     }
 }

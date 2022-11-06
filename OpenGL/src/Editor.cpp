@@ -4,7 +4,7 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_stdlib.h"
 #include "Model.h"
-
+#include "Input.h"
 char model_input_buffer[160]{};
 
 Editor Editor::m_instance;
@@ -59,9 +59,19 @@ void Editor::CreateTextInput(const char* title, Model* model)
     Get().CreateTextInputImpl(title, model);
 }
 
-bool Editor::MouseIsOnEditor()
+void Editor::CreateViewWindow(const char* title, glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer)
 {
-    return Get().MouseIsOnEditorImpl();
+    Get().CreateViewWindowImpl(title, projection_matrix, window, camera, frame_buffer);
+}
+
+bool Editor::ViewportSelected()
+{
+    return Get().ViewportSelectedImpl();
+}
+
+bool Editor::ViewportHovered()
+{
+    return Get().ViewportHoveredImpl();
 }
 
 bool Editor::ShowSkybox()
@@ -74,7 +84,7 @@ Editor::~Editor()
 }
 
 Editor::Editor() :
-    m_filter_type{0}, m_vignette_intensity{1.0f}, m_blur_intensity{0.07f}, m_show_skybox{true}
+    m_filter_type{0}, m_vignette_intensity{1.0f}, m_blur_intensity{0.07f}, m_show_skybox{true}, viewport_selected{false}, viewport_hovered{false}
 {
 }
 
@@ -134,7 +144,7 @@ void Editor::BeginRenderImpl()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    //ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+    ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
     //bool show_demo_window = false;
     //ImGui::ShowDemoWindow(&show_demo_window);
 }
@@ -168,6 +178,8 @@ void Editor::ShutdownImpl()
 
 void Editor::CreateTransformMenuImpl(const char* title, Transform *transform, uint8_t transform_flags)
 {
+    if (Get().viewport_selected) ImGui::BeginDisabled();
+
     ImGui::Begin(title);
     ImGui::Text("Transform");
 
@@ -202,11 +214,16 @@ void Editor::CreateTransformMenuImpl(const char* title, Transform *transform, ui
 
     transform->UpdateModelMatrix();
     ImGui::End();
+
+    if (Get().viewport_selected) ImGui::EndDisabled();
 }
 
 void Editor::CreatePointLightMenuImpl(const char* title, PointLight *point_light)
 {
+    if (Get().viewport_selected) ImGui::BeginDisabled();
+
     ImGui::Begin(title);
+    ImGui::CaptureMouseFromApp(!(Get().viewport_selected));
     if (ImGui::Button("On/Off"))
     {
         point_light->Toggle();
@@ -215,16 +232,22 @@ void Editor::CreatePointLightMenuImpl(const char* title, PointLight *point_light
     {
         point_light->GetIsHidden() = 1 - point_light->GetIsHidden();
     }
+    
     ImGui::DragFloat("Brightness", &(point_light->GetBrightness()), 0.1f, 0.0f, 10.0f);
     ImGui::ColorEdit3("Color", (float*)(&(point_light->GetColor())));
     CreateTransformMenuImpl(title, &(point_light->GetModel().GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE | TRANSFORM_SCALE_UNIFORM);
     point_light->UpdateColors();
     ImGui::End();
+
+    if (Get().viewport_selected) ImGui::EndDisabled();
 }
 
 void Editor::CreateDirectionalLightMenuImpl(const char* title, DirectionalLight* directional_light)
 {
+    if (Get().viewport_selected) ImGui::BeginDisabled();
+
     ImGui::Begin(title);
+    ImGui::CaptureMouseFromApp(!(Get().viewport_selected));
     if (ImGui::Button("On/Off"))
     {
         directional_light->Toggle();
@@ -232,10 +255,14 @@ void Editor::CreateDirectionalLightMenuImpl(const char* title, DirectionalLight*
 
     ImGui::DragFloat3("Direction", &(directional_light->GetDirection().x), 0.1f, -100.0f, 100.0f);
     ImGui::End();
+
+    if (Get().viewport_selected) ImGui::EndDisabled();
 }
 
 void Editor::CreateFiltersMenuImpl(const char* title, Shader& shader, float time)
 {
+    if (Get().viewport_selected) ImGui::BeginDisabled();
+    
     ImGui::Begin(title);
     ImGui::RadioButton("Normal", &Get().m_filter_type, 0);
     ImGui::RadioButton("Inverted", &Get().m_filter_type, 1);
@@ -245,6 +272,9 @@ void Editor::CreateFiltersMenuImpl(const char* title, Shader& shader, float time
     ImGui::RadioButton("Blur Sweep", &Get().m_filter_type, 4);
     ImGui::DragFloat("Blur Intensity", &Get().m_blur_intensity, 0.001f, 0.0f, 0.07f);
     ImGui::End();
+    
+    if (Get().viewport_selected) ImGui::EndDisabled();
+
     shader.SetUniform1i("filter_type", Get().m_filter_type);
     shader.SetUniform1f("vignette_intensity", Get().m_vignette_intensity);
     shader.SetUniform1f("time", time);
@@ -253,31 +283,83 @@ void Editor::CreateFiltersMenuImpl(const char* title, Shader& shader, float time
 
 void Editor::CreateBackgroundMenuImpl(const char* title, glm::vec3& color)
 {
+    if (Get().viewport_selected) ImGui::BeginDisabled();
+
     ImGui::Begin(title);
+    ImGui::CaptureMouseFromApp(!(Get().viewport_selected));
     if (ImGui::Button("Show Skybox"))
     {
         Get().ToggleSkybox();
     }
     ImGui::ColorEdit3("Color", (float*)&(color));
     ImGui::End();
+
+    if (Get().viewport_selected) ImGui::EndDisabled();
 }
 
 void Editor::CreateTextInputImpl(const char* title, Model *model)
 {
+    if (Get().viewport_selected) ImGui::BeginDisabled();
+
     ImGui::Begin(title);
+    ImGui::CaptureMouseFromApp(!(Get().viewport_selected));
     ImGui::InputText(title, model_input_buffer, 160);
 
     if (ImGui::Button("Load model"))
     {
         model->LoadNewModel(std::string(model_input_buffer));
     }
+    
+    ImGui::End();
+
+    if (Get().viewport_selected) ImGui::EndDisabled();
+}
+
+void Editor::CreateViewWindowImpl(const char* title, glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer)
+{
+    static ImVec2 image_size{};
+    constexpr ImVec2 uv_x{ 0, 1 };
+    constexpr ImVec2 uv_y{ 1, 0 };
+
+    if (ImGui::Begin(title))
+    {
+        ImGui::CaptureKeyboardFromApp(false);
+    }
+
+    ImVec2 panel_size{ ImGui::GetWindowSize() };
+    panel_size.y -= 35;
+
+    if (camera && ((image_size.x != panel_size.x) || (image_size.y != panel_size.y)))
+    {
+        image_size = panel_size;
+        projection_matrix = glm::perspective(glm::radians(camera->GetFieldOfView()), static_cast<float>(image_size.x) / static_cast<float>(image_size.y), camera->GetNearPlaneDistance(), camera->GetFarPlaneDistance());
+    }
+
+    ImGui::Image((void*)(intptr_t)frame_buffer->GetTextureColorBufferID(), image_size, uv_x, uv_y);
+
+    bool selecting{ Input::IsMouseButtonPressed(window->GetGLFWwindow(), Mouse::LeftClick) || Input::IsMouseButtonPressed(window->GetGLFWwindow(), Mouse::RightClick) };
+    Get().viewport_hovered = ImGui::IsWindowHovered();
+
+    if (Get().viewport_hovered && selecting && Get().viewport_selected == false)
+    {
+        Get().viewport_selected = true;
+    }
+    else if (!selecting)
+    {
+        Get().viewport_selected = false;
+    }
 
     ImGui::End();
 }
 
-bool Editor::MouseIsOnEditorImpl()
+bool Editor::ViewportSelectedImpl()
 {
-    return ImGui::GetIO().WantCaptureMouse;
+    return Get().viewport_selected;
+}
+
+bool Editor::ViewportHoveredImpl()
+{
+    return Get().viewport_hovered;
 }
 
 bool Editor::ShowSkyboxImpl()

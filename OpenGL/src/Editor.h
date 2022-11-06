@@ -6,6 +6,9 @@
 #include "Shader.h"
 #include "PointLight.h"
 #include "DirectionalLight.h"
+#include "FrameBuffer.h"
+#include "Window.h"
+#include "Camera.h"
 
 #define TRANSFORM_TRANSLATION 0b1
 #define TRANSFORM_ROTATION 0b10
@@ -31,7 +34,9 @@ public:
 	static void CreateFiltersMenu(const char* title, Shader& shader, float time);
 	static void CreateBackgroundMenu(const char* title, glm::vec3& color);
 	static void CreateTextInput(const char* title, class Model* model);
-	static bool MouseIsOnEditor();
+	static void CreateViewWindow(const char* title, glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer);
+	static bool ViewportSelected();
+	static bool ViewportHovered();
 	static bool ShowSkybox();
 
 	~Editor();
@@ -43,7 +48,8 @@ private:
 	float m_vignette_intensity;
 	float m_blur_intensity;
 	bool m_show_skybox;
-
+	bool viewport_selected;
+	bool viewport_hovered;
 	static Editor& Get();
 
 	static void InitImpl(GLFWwindow* window, const char* GLSL_version);
@@ -57,7 +63,9 @@ private:
 	static void CreateFiltersMenuImpl(const char* title, Shader& shader, float time);
 	static void CreateBackgroundMenuImpl(const char* title, glm::vec3& color);
 	static void CreateTextInputImpl(const char* title, class Model* model);
-	static bool MouseIsOnEditorImpl();
+	static void CreateViewWindowImpl(const char* title, glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer);
+	static bool ViewportSelectedImpl();
+	static bool ViewportHoveredImpl();
 	static bool ShowSkyboxImpl();
 
 	static void ToggleSkybox();
