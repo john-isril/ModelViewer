@@ -4,8 +4,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Transform.h"
 #include "Shader.h"
-#include "PointLight.h"
-#include "DirectionalLight.h"
+#include "Lights/PointLight.h"
+#include "Lights/DirectionalLight.h"
 #include "FrameBuffer.h"
 #include "Window.h"
 #include "Camera.h"
@@ -28,13 +28,16 @@ public:
 	static void EndRender();
 	static void Shutdown();
 
-	static void CreateTransformMenu(const char* title, Transform* transform, uint8_t transform_flags);
-	static void CreatePointLightMenu(const char* title, PointLight* point_light);
-	static void CreateDirectionalLightMenu(const char* title, DirectionalLight* directional_light);
-	static void CreateFiltersMenu(const char* title, Shader& shader, float time);
-	static void CreateBackgroundMenu(const char* title, glm::vec3& color);
-	static void CreateTextInput(const char* title, class Model* model);
-	static void CreateViewWindow(const char* title, glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer);
+	static void CreateTransformMenuPanel(const char* title, Transform* transform, uint8_t transform_flags);
+	static void CreatePointLightMenuPanel(PointLight* point_light);
+	static void CreateDirectionalLightMenuPanel(DirectionalLight* directional_light);
+	static void CreateFiltersMenuPanel(Shader& shader, float time);
+	static void CreateBackgroundMenuPanel(glm::vec3& color);
+	static void CreateModelLoaderPanel(Model* model);
+	static void CreateViewport(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer);
+	static void GeneratePanels(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer, Model* model, glm::vec3& background_color, Shader &shader, float time,
+										DirectionalLight* directional_light, PointLight* point_light,
+										const char* transform_title, Transform* transform, uint8_t transform_flags);
 	static bool ViewportSelected();
 	static bool ViewportHovered();
 	static bool ShowSkybox();
@@ -50,6 +53,7 @@ private:
 	bool m_show_skybox;
 	bool viewport_selected;
 	bool viewport_hovered;
+	
 	static Editor& Get();
 
 	static void InitImpl(GLFWwindow* window, const char* GLSL_version);
@@ -57,13 +61,16 @@ private:
 	static void EndRenderImpl();
 	static void ShutdownImpl();
 
-	static void CreateTransformMenuImpl(const char* title, Transform* transform, uint8_t transform_flags);
-	static void CreatePointLightMenuImpl(const char* title, PointLight* point_light);
-	static void CreateDirectionalLightMenuImpl(const char* title, DirectionalLight* directional_light);
-	static void CreateFiltersMenuImpl(const char* title, Shader& shader, float time);
-	static void CreateBackgroundMenuImpl(const char* title, glm::vec3& color);
-	static void CreateTextInputImpl(const char* title, class Model* model);
-	static void CreateViewWindowImpl(const char* title, glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer);
+	static void CreateTransformMenuPanelImpl(const char* title, Transform* transform, uint8_t transform_flags);
+	static void CreatePointLightMenuPanelImpl(PointLight* point_light);
+	static void CreateDirectionalLightMenuPanelImpl(DirectionalLight* directional_light);
+	static void CreateFiltersMenuPanelImpl(Shader& shader, float time);
+	static void CreateBackgroundMenuPanelImpl(glm::vec3& color);
+	static void CreateModelLoaderPanelImpl(Model* model);
+	static void CreateViewportImpl(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer);
+	static void GeneratePanelsImpl(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer, Model* model, glm::vec3& background_color, Shader& shader, float time,
+		DirectionalLight* directional_light, PointLight* point_light,
+		const char* transform_title, Transform* transform, uint8_t transform_flags);
 	static bool ViewportSelectedImpl();
 	static bool ViewportHoveredImpl();
 	static bool ShowSkyboxImpl();

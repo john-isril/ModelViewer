@@ -18,8 +18,8 @@
 #include "FrameBuffer.h"
 #include "FilterType.h"
 #include "Skybox.h"
-#include "PointLight.h"
-#include "DirectionalLight.h"
+#include "Lights/PointLight.h"
+#include "Lights/DirectionalLight.h"
 #include "Window.h"
 
 constexpr char GLSL_version[]{ "#version 460" };
@@ -112,8 +112,9 @@ int main()
 
     postprocessing_shader.Bind();
     postprocessing_shader.SetUniform1i("screen_quad_texture", 0);
-    
+
     FrameBuffer postprocess_frame_buffer{ window.GetScreenWidth(), window.GetScreenHeight()};
+    FrameBuffer editor_frame_buffer{ window.GetScreenWidth(), window.GetScreenHeight() };
 
     skybox_shader.Bind();
     skybox_shader.SetUniform1i("skybox", 0);
@@ -123,16 +124,15 @@ int main()
     while (!window.Closed())
     {
         float current_frame{ static_cast<float>(glfwGetTime()) };
-
         delta_time = current_frame - last_frame;
         last_frame = current_frame;
         processInput(window.GetGLFWwindow());
 
         postprocess_frame_buffer.Bind();
         renderer.Clear(background_color, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-         UpdateWindowDimensionDependencies(projection, &window, &camera, &postprocess_frame_buffer);
         
+         UpdateWindowDimensionDependencies(projection, &window, &camera, &postprocess_frame_buffer);
+
         point_light.GetModel().GetTransform().UpdateMVP(camera.GetViewMatrix(), projection);
 
         if (!point_light.GetIsHidden())
@@ -171,19 +171,15 @@ int main()
         }
 
         postprocess_frame_buffer.Unbind();
+        //editor_frame_buffer.Bind();
+        renderer.Clear(background_color, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         postprocessing_shader.Bind();
         postprocess_frame_buffer.BindTextureColorBuffer();
-        
         renderer.DrawArrays(screen_quad_VAO, postprocessing_shader, NUM_OF_SCREEN_QUAD_VERTICES);
-
+        //editor_frame_buffer.Unbind();
+        //editor_frame_buffer.BindTextureColorBuffer();
         Editor::BeginRender();
-        Editor::CreateViewWindow("Viewport", projection, &window, &camera, &postprocess_frame_buffer);
-        Editor::CreateTransformMenu("3D Model", &(model_3D.GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE);
-        Editor::CreatePointLightMenu("Point Light", &point_light);
-        Editor::CreateFiltersMenu("Filters", postprocessing_shader, glfwGetTime());
-        Editor::CreateTextInput("3D Model File Path", &model_3D);
-        Editor::CreateBackgroundMenu("Background", background_color);
-        Editor::CreateDirectionalLightMenu("Directional Light", &directional_light);
+        Editor::GeneratePanels(projection, &window, &camera, &postprocess_frame_buffer, &model_3D, background_color, postprocessing_shader, current_frame, &directional_light, &point_light, "3D Model", &(model_3D.GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE);
         Editor::EndRender();
 
         window.Update();
@@ -252,6 +248,7 @@ static void UpdateWindowDimensionDependencies(glm::mat4 &projection_matrix, Wind
         if (fame_buffer)
         {
             fame_buffer->Resize(current_window_width, current_window_height);
+            projection_matrix = glm::perspective(glm::radians(camera->GetFieldOfView()), static_cast<float>(current_window_width) / static_cast<float>(current_window_height), camera->GetNearPlaneDistance(), camera->GetFarPlaneDistance());
         }
     }
 }

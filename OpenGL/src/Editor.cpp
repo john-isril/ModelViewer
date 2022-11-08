@@ -5,6 +5,8 @@
 #include "imgui_stdlib.h"
 #include "Model.h"
 #include "Input.h"
+#include <iostream>
+
 char model_input_buffer[160]{};
 
 Editor Editor::m_instance;
@@ -29,39 +31,46 @@ void Editor::Shutdown()
     Get().Shutdown();
 }
 
-void Editor::CreateTransformMenu(const char* title, Transform* transform, uint8_t transform_flags)
+void Editor::CreateTransformMenuPanel(const char* title, Transform* transform, uint8_t transform_flags)
 {
-    Get().CreateTransformMenuImpl(title, transform, transform_flags);
+    Get().CreateTransformMenuPanelImpl(title, transform, transform_flags);
 }
 
-void Editor::CreatePointLightMenu(const char* title, PointLight* point_light)
+void Editor::CreatePointLightMenuPanel(PointLight* point_light)
 {
-    Get().CreatePointLightMenuImpl(title, point_light);
+    Get().CreatePointLightMenuPanelImpl(point_light);
 }
 
-void Editor::CreateDirectionalLightMenu(const char* title, DirectionalLight* directional_light)
+void Editor::CreateDirectionalLightMenuPanel(DirectionalLight* directional_light)
 {
-    Get().CreateDirectionalLightMenuImpl(title, directional_light);
+    Get().CreateDirectionalLightMenuPanelImpl(directional_light);
 }
 
-void Editor::CreateFiltersMenu(const char* title, Shader& shader, float time)
+void Editor::CreateFiltersMenuPanel(Shader& shader, float time)
 {
-    Get().CreateFiltersMenuImpl(title, shader, time);
+    Get().CreateFiltersMenuPanelImpl(shader, time);
 }
 
-void Editor::CreateBackgroundMenu(const char* title, glm::vec3& color)
+void Editor::CreateBackgroundMenuPanel(glm::vec3& color)
 {
-    Get().CreateBackgroundMenuImpl(title, color);
+    Get().CreateBackgroundMenuPanelImpl(color);
 }
 
-void Editor::CreateTextInput(const char* title, Model* model)
+void Editor::CreateModelLoaderPanel(Model* model)
 {
-    Get().CreateTextInputImpl(title, model);
+    Get().CreateModelLoaderPanelImpl(model);
 }
 
-void Editor::CreateViewWindow(const char* title, glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer)
+void Editor::CreateViewport(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer)
 {
-    Get().CreateViewWindowImpl(title, projection_matrix, window, camera, frame_buffer);
+    Get().CreateViewportImpl(projection_matrix, window, camera, frame_buffer);
+}
+
+void Editor::GeneratePanels(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer, Model* model, glm::vec3& background_color, Shader& shader, float time,
+    DirectionalLight* directional_light, PointLight* point_light,
+    const char* transform_title, Transform* transform, uint8_t transform_flags)
+{
+    Get().GeneratePanelsImpl(projection_matrix, window, camera, frame_buffer, model, background_color, shader, time, directional_light, point_light, transform_title, transform, transform_flags);
 }
 
 bool Editor::ViewportSelected()
@@ -176,8 +185,13 @@ void Editor::ShutdownImpl()
     ImGui::DestroyContext();
 }
 
-void Editor::CreateTransformMenuImpl(const char* title, Transform *transform, uint8_t transform_flags)
+void Editor::CreateTransformMenuPanelImpl(const char* title, Transform *transform, uint8_t transform_flags)
 {
+    if (!transform)
+    {
+        std::cerr << "ERROR: Null point transform!\n";
+    }
+    
     if (Get().viewport_selected) ImGui::BeginDisabled();
 
     ImGui::Begin(title);
@@ -218,12 +232,17 @@ void Editor::CreateTransformMenuImpl(const char* title, Transform *transform, ui
     if (Get().viewport_selected) ImGui::EndDisabled();
 }
 
-void Editor::CreatePointLightMenuImpl(const char* title, PointLight *point_light)
+void Editor::CreatePointLightMenuPanelImpl(PointLight *point_light)
 {
+    if (!point_light)
+    {
+        std::cerr << "ERROR: Null point light!\n";
+    }
+    
     if (Get().viewport_selected) ImGui::BeginDisabled();
 
-    ImGui::Begin(title);
-    ImGui::CaptureMouseFromApp(!(Get().viewport_selected));
+    ImGui::Begin(point_light->GetName().c_str());
+
     if (ImGui::Button("On/Off"))
     {
         point_light->Toggle();
@@ -235,18 +254,18 @@ void Editor::CreatePointLightMenuImpl(const char* title, PointLight *point_light
     
     ImGui::DragFloat("Brightness", &(point_light->GetBrightness()), 0.1f, 0.0f, 10.0f);
     ImGui::ColorEdit3("Color", (float*)(&(point_light->GetColor())));
-    CreateTransformMenuImpl(title, &(point_light->GetModel().GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE | TRANSFORM_SCALE_UNIFORM);
+    CreateTransformMenuPanelImpl(point_light->GetName().c_str(), &(point_light->GetModel().GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE | TRANSFORM_SCALE_UNIFORM);
     point_light->UpdateColors();
     ImGui::End();
 
     if (Get().viewport_selected) ImGui::EndDisabled();
 }
 
-void Editor::CreateDirectionalLightMenuImpl(const char* title, DirectionalLight* directional_light)
+void Editor::CreateDirectionalLightMenuPanelImpl(DirectionalLight* directional_light)
 {
     if (Get().viewport_selected) ImGui::BeginDisabled();
 
-    ImGui::Begin(title);
+    ImGui::Begin(directional_light->GetName().c_str());
     ImGui::CaptureMouseFromApp(!(Get().viewport_selected));
     if (ImGui::Button("On/Off"))
     {
@@ -259,11 +278,11 @@ void Editor::CreateDirectionalLightMenuImpl(const char* title, DirectionalLight*
     if (Get().viewport_selected) ImGui::EndDisabled();
 }
 
-void Editor::CreateFiltersMenuImpl(const char* title, Shader& shader, float time)
+void Editor::CreateFiltersMenuPanelImpl(Shader &shader, float time)
 {
     if (Get().viewport_selected) ImGui::BeginDisabled();
-    
-    ImGui::Begin(title);
+
+    ImGui::Begin("Filters");
     ImGui::RadioButton("Normal", &Get().m_filter_type, 0);
     ImGui::RadioButton("Inverted", &Get().m_filter_type, 1);
     ImGui::RadioButton("Greyscale", &Get().m_filter_type, 2);
@@ -272,7 +291,7 @@ void Editor::CreateFiltersMenuImpl(const char* title, Shader& shader, float time
     ImGui::RadioButton("Blur Sweep", &Get().m_filter_type, 4);
     ImGui::DragFloat("Blur Intensity", &Get().m_blur_intensity, 0.001f, 0.0f, 0.07f);
     ImGui::End();
-    
+
     if (Get().viewport_selected) ImGui::EndDisabled();
 
     shader.SetUniform1i("filter_type", Get().m_filter_type);
@@ -281,11 +300,11 @@ void Editor::CreateFiltersMenuImpl(const char* title, Shader& shader, float time
     shader.SetUniform1f("blur_intensity", Get().m_blur_intensity);
 }
 
-void Editor::CreateBackgroundMenuImpl(const char* title, glm::vec3& color)
+void Editor::CreateBackgroundMenuPanelImpl(glm::vec3& color)
 {
     if (Get().viewport_selected) ImGui::BeginDisabled();
 
-    ImGui::Begin(title);
+    ImGui::Begin("Background");
     ImGui::CaptureMouseFromApp(!(Get().viewport_selected));
     if (ImGui::Button("Show Skybox"))
     {
@@ -297,13 +316,17 @@ void Editor::CreateBackgroundMenuImpl(const char* title, glm::vec3& color)
     if (Get().viewport_selected) ImGui::EndDisabled();
 }
 
-void Editor::CreateTextInputImpl(const char* title, Model *model)
+void Editor::CreateModelLoaderPanelImpl(Model *model)
 {
+    if (!model)
+    {
+        std::cerr << "ERROR: Null model!\n";
+    }
+    
     if (Get().viewport_selected) ImGui::BeginDisabled();
 
-    ImGui::Begin(title);
-    ImGui::CaptureMouseFromApp(!(Get().viewport_selected));
-    ImGui::InputText(title, model_input_buffer, 160);
+    ImGui::Begin("3D Model Loader");
+    ImGui::InputText("3D Model File Path", model_input_buffer, 160);
 
     if (ImGui::Button("Load model"))
     {
@@ -315,7 +338,7 @@ void Editor::CreateTextInputImpl(const char* title, Model *model)
     if (Get().viewport_selected) ImGui::EndDisabled();
 }
 
-void Editor::CreateViewWindowImpl(const char* title, glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer)
+void Editor::CreateViewportImpl(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer)
 {
     static ImVec2 image_size{};
     static glm::vec2 current_window_size{};
@@ -324,8 +347,7 @@ void Editor::CreateViewWindowImpl(const char* title, glm::mat4& projection_matri
     constexpr ImVec2 uv_x{ 0, 1 };
     constexpr ImVec2 uv_y{ 1, 0 };
 
-    ImGui::Begin(title);
-
+    ImGui::Begin("Viewport");
     ImVec2 panel_size{ ImGui::GetWindowSize() };
     panel_size.y -= 35;
 
@@ -334,25 +356,40 @@ void Editor::CreateViewWindowImpl(const char* title, glm::mat4& projection_matri
         image_size = panel_size;
         projection_matrix = glm::perspective(glm::radians(camera->GetFieldOfView()), static_cast<float>(image_size.x) / static_cast<float>(image_size.y), camera->GetNearPlaneDistance(), camera->GetFarPlaneDistance());
     }
-
- //   image_size.x += (current_window_size.x - last_window_size.x);
-
+    else if (!camera)
+    {
+        std::cerr << "ERROR: Null camera!\n";
+    }
 
     ImGui::Image((void*)(intptr_t)frame_buffer->GetTextureColorBufferID(), image_size, uv_x, uv_y);
-
-    bool selecting{ Input::IsMouseButtonPressed(window->GetGLFWwindow(), Mouse::LeftClick) || Input::IsMouseButtonPressed(window->GetGLFWwindow(), Mouse::RightClick) };
-    Get().viewport_hovered = ImGui::IsWindowHovered();
-
-    if (Get().viewport_hovered && selecting && Get().viewport_selected == false)
+    
+    if (window)
     {
-        Get().viewport_selected = true;
-    }
-    else if (!selecting)
-    {
-        Get().viewport_selected = false;
-    }
+        bool selecting{ Input::IsMouseButtonPressed(window->GetGLFWwindow(), Mouse::LeftClick) || Input::IsMouseButtonPressed(window->GetGLFWwindow(), Mouse::RightClick) };
+        Get().viewport_hovered = ImGui::IsWindowHovered();
 
+        if (Get().viewport_hovered && selecting && Get().viewport_selected == false)
+        {
+            Get().viewport_selected = true;
+        }
+        else if (!selecting)
+        {
+            Get().viewport_selected = false;
+        }
+    }
+    
     ImGui::End();
+}
+
+void Editor::GeneratePanelsImpl(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer, Model* model, glm::vec3& background_color, Shader &shader, float time, DirectionalLight* directional_light, PointLight* point_light, const char* transform_title, Transform* transform, uint8_t transform_flags)
+{
+    Get().CreateViewportImpl(projection_matrix, window, camera, frame_buffer);
+    Get().CreateTransformMenuPanelImpl(transform_title, transform, transform_flags);
+    Get().CreatePointLightMenuPanelImpl(point_light);
+    Get().CreateFiltersMenuPanelImpl(shader, time);
+    Get().CreateModelLoaderPanelImpl(model);
+    Get().CreateBackgroundMenuPanelImpl(background_color);
+    Get().CreateDirectionalLightMenuPanelImpl(directional_light);
 }
 
 bool Editor::ViewportSelectedImpl()

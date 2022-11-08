@@ -134,7 +134,7 @@ void Renderer::DrawMesh(const Mesh& mesh, Shader &shader)
 
         case Texture::Type::Normal:
             normal_texture_uniform_name[15] = '0' + normal_texture_num++;
-            shader.SetUniform1i(normal_texture_uniform_name, i);
+            //shader.SetUniform1i(normal_texture_uniform_name, i);
             break;
 
         case Texture::Type::Height:

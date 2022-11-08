@@ -1,7 +1,7 @@
 #include "Light.h"
 
-Light::Light() :
-	m_brightness{1.0f}, m_color{1.0f}, m_specular_color{1.0f}, m_is_on{true}
+Light::Light(const std::string_view& name, float brightness, const glm::vec4& color, const glm::vec4& specular_color, bool is_on) :
+	m_name{name}, m_brightness {brightness}, m_color{ color }, m_specular_color{ specular_color }, m_is_on{ true }
 {
 	this->UpdateColors();
 }
@@ -41,6 +41,11 @@ bool& Light::GetIsOn()
 	return m_is_on;
 }
 
+const std::string Light::GetName() const
+{
+	return m_name;
+}
+
 void Light::SetColor(const glm::vec4& color)
 {
 	m_color = color;
@@ -64,6 +69,11 @@ void Light::SetAmbient(const glm::vec4& ambient)
 void Light::SetBrightness(float brightness)
 {
 	m_brightness = brightness;
+}
+
+void Light::SetName(const std::string& name)
+{
+	m_name = name;
 }
 
 void Light::UpdateColors()

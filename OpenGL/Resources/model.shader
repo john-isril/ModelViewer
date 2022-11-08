@@ -28,7 +28,7 @@ struct Material
 	float shininess;
 	sampler2D diffuse1;
 	sampler2D specular1;
-	sampler2D normal1;
+	//sampler2D normal1;
 	sampler2D emission;
 	// dont need ambient bc same as diffuse
 	//vec3 ambient;
