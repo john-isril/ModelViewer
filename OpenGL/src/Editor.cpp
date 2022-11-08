@@ -67,10 +67,9 @@ void Editor::CreateViewport(glm::mat4& projection_matrix, Window* window, Camera
 }
 
 void Editor::GeneratePanels(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer, Model* model, glm::vec3& background_color, Shader& shader, float time,
-    DirectionalLight* directional_light, PointLight* point_light,
-    const char* transform_title, Transform* transform, uint8_t transform_flags)
+    DirectionalLight* directional_light, PointLight* point_light)
 {
-    Get().GeneratePanelsImpl(projection_matrix, window, camera, frame_buffer, model, background_color, shader, time, directional_light, point_light, transform_title, transform, transform_flags);
+    Get().GeneratePanelsImpl(projection_matrix, window, camera, frame_buffer, model, background_color, shader, time, directional_light, point_light);
 }
 
 bool Editor::ViewportSelected()
@@ -381,10 +380,10 @@ void Editor::CreateViewportImpl(glm::mat4& projection_matrix, Window* window, Ca
     ImGui::End();
 }
 
-void Editor::GeneratePanelsImpl(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer, Model* model, glm::vec3& background_color, Shader &shader, float time, DirectionalLight* directional_light, PointLight* point_light, const char* transform_title, Transform* transform, uint8_t transform_flags)
+void Editor::GeneratePanelsImpl(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer, Model* model, glm::vec3& background_color, Shader &shader, float time, DirectionalLight* directional_light, PointLight* point_light)
 {
     Get().CreateViewportImpl(projection_matrix, window, camera, frame_buffer);
-    Get().CreateTransformMenuPanelImpl(transform_title, transform, transform_flags);
+    Get().CreateTransformMenuPanelImpl(model->GetName().c_str(), &(model->GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE);
     Get().CreatePointLightMenuPanelImpl(point_light);
     Get().CreateFiltersMenuPanelImpl(shader, time);
     Get().CreateModelLoaderPanelImpl(model);

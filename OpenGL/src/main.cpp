@@ -29,7 +29,7 @@ static float delta_time{ 0.0f };
 
 static void processInput(GLFWwindow* window);
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-static void UpdateWindowDimensionDependencies(glm::mat4& projection_matrix, Window* window, Camera* camera = nullptr, FrameBuffer* fame_buffer = nullptr);
+static bool UpdateWindowDimensionDependencies(glm::mat4& projection_matrix, Window* window, Camera* camera = nullptr, FrameBuffer* fame_buffer = nullptr);
 
 static Camera camera{ Transform{glm::vec3 {0.0f}, Rotation{0.0f, -90.0f, 0.0f}, glm::vec3 {0.0f, 0.0f, 3.0f}} };
 
@@ -38,9 +38,8 @@ int main()
     Window window{ "3D Model Viewer" };
     window.SetScrollCallback(scroll_callback);
 
-    Editor::Init(window.GetGLFWwindow(), GLSL_version);
-
     Renderer renderer{};
+    Editor::Init(window.GetGLFWwindow(), GLSL_version);
 
     Shader light_sphere_shader{ "Resources/light_sphere.shader" };
     Shader outline_shader{ "Resources/outline.shader" };
@@ -113,8 +112,8 @@ int main()
     postprocessing_shader.Bind();
     postprocessing_shader.SetUniform1i("screen_quad_texture", 0);
 
-    FrameBuffer postprocess_frame_buffer{ window.GetScreenWidth(), window.GetScreenHeight()};
-    FrameBuffer editor_frame_buffer{ window.GetScreenWidth(), window.GetScreenHeight() };
+    FrameBuffer pre_processed_frame_buffer{ window.GetScreenWidth(), window.GetScreenHeight()};
+    FrameBuffer post_processed_buffer{ window.GetScreenWidth(), window.GetScreenHeight() };
 
     skybox_shader.Bind();
     skybox_shader.SetUniform1i("skybox", 0);
@@ -128,10 +127,10 @@ int main()
         last_frame = current_frame;
         processInput(window.GetGLFWwindow());
 
-        postprocess_frame_buffer.Bind();
+        pre_processed_frame_buffer.Bind();
         renderer.Clear(background_color, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         
-         UpdateWindowDimensionDependencies(projection, &window, &camera, &postprocess_frame_buffer);
+        bool window_resized{ UpdateWindowDimensionDependencies(projection, &window, &camera, &pre_processed_frame_buffer) };
 
         point_light.GetModel().GetTransform().UpdateMVP(camera.GetViewMatrix(), projection);
 
@@ -170,16 +169,22 @@ int main()
             renderer.DrawSkybox(skybox, camera.GetViewMatrix(), projection, skybox_shader);
         }
 
-        postprocess_frame_buffer.Unbind();
-        //editor_frame_buffer.Bind();
+        pre_processed_frame_buffer.Unbind();
+        post_processed_buffer.Bind();
         renderer.Clear(background_color, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        
+        if (window_resized)
+        {
+            post_processed_buffer.Resize(window.GetScreenWidth(), window.GetScreenHeight());
+        }
+
         postprocessing_shader.Bind();
-        postprocess_frame_buffer.BindTextureColorBuffer();
+        pre_processed_frame_buffer.BindTextureColorBuffer();
         renderer.DrawArrays(screen_quad_VAO, postprocessing_shader, NUM_OF_SCREEN_QUAD_VERTICES);
-        //editor_frame_buffer.Unbind();
-        //editor_frame_buffer.BindTextureColorBuffer();
+        post_processed_buffer.Unbind();
+        post_processed_buffer.BindTextureColorBuffer();
         Editor::BeginRender();
-        Editor::GeneratePanels(projection, &window, &camera, &postprocess_frame_buffer, &model_3D, background_color, postprocessing_shader, current_frame, &directional_light, &point_light, "3D Model", &(model_3D.GetTransform()), TRANSFORM_TRANSLATION | TRANSFORM_ROTATION | TRANSFORM_SCALE);
+        Editor::GeneratePanels(projection, &window, &camera, &post_processed_buffer, &model_3D, background_color, postprocessing_shader, current_frame, &directional_light, &point_light);
         Editor::EndRender();
 
         window.Update();
@@ -235,7 +240,7 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     }
 }
 
-static void UpdateWindowDimensionDependencies(glm::mat4 &projection_matrix, Window *window, Camera *camera, FrameBuffer *fame_buffer)
+static bool UpdateWindowDimensionDependencies(glm::mat4 &projection_matrix, Window *window, Camera *camera, FrameBuffer *fame_buffer)
 {
     static uint32_t current_window_width{};
     static uint32_t current_window_height{};
@@ -249,6 +254,9 @@ static void UpdateWindowDimensionDependencies(glm::mat4 &projection_matrix, Wind
         {
             fame_buffer->Resize(current_window_width, current_window_height);
             projection_matrix = glm::perspective(glm::radians(camera->GetFieldOfView()), static_cast<float>(current_window_width) / static_cast<float>(current_window_height), camera->GetNearPlaneDistance(), camera->GetFarPlaneDistance());
+            return true;
         }
     }
+
+    return false;
 }

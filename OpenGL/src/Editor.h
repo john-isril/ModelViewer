@@ -9,6 +9,7 @@
 #include "FrameBuffer.h"
 #include "Window.h"
 #include "Camera.h"
+#include "Model.h"
 
 #define TRANSFORM_TRANSLATION 0b1
 #define TRANSFORM_ROTATION 0b10
@@ -36,8 +37,7 @@ public:
 	static void CreateModelLoaderPanel(Model* model);
 	static void CreateViewport(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer);
 	static void GeneratePanels(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer, Model* model, glm::vec3& background_color, Shader &shader, float time,
-										DirectionalLight* directional_light, PointLight* point_light,
-										const char* transform_title, Transform* transform, uint8_t transform_flags);
+										DirectionalLight* directional_light, PointLight* point_light);
 	static bool ViewportSelected();
 	static bool ViewportHovered();
 	static bool ShowSkybox();
@@ -69,8 +69,7 @@ private:
 	static void CreateModelLoaderPanelImpl(Model* model);
 	static void CreateViewportImpl(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer);
 	static void GeneratePanelsImpl(glm::mat4& projection_matrix, Window* window, Camera* camera, FrameBuffer* frame_buffer, Model* model, glm::vec3& background_color, Shader& shader, float time,
-		DirectionalLight* directional_light, PointLight* point_light,
-		const char* transform_title, Transform* transform, uint8_t transform_flags);
+		DirectionalLight* directional_light, PointLight* point_light);
 	static bool ViewportSelectedImpl();
 	static bool ViewportHoveredImpl();
 	static bool ShowSkyboxImpl();

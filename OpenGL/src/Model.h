@@ -15,18 +15,22 @@
 class Model
 {
 public:
-    Model(const std::string& path);
+    Model(const std::string& path = "", const std::string& name = "3D Model");
     Model(const Transform &transform, const std::string& path);
     const std::vector<Mesh>* GetMeshes() const;
     Transform& GetTransform();
     void LoadNewModel(std::string const& path);
-    const std::string& GetFilePath() const;
+    inline const std::string& GetFilePath() const { return m_path; };
+    inline const std::string& GetName() const { return m_name; };
+    inline void SetFilePath(const std::string& path) { m_path = path; }
+    inline void SetName(const std::string& name) { m_name = name; }
 
 private:
     std::unordered_set<std::string> m_loaded_textures_file_names;
     std::string m_path;
     std::vector<Mesh> m_meshes;
     std::string m_directory;
+    std::string m_name;
     Transform m_transform;
 
 private:

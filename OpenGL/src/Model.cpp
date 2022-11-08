@@ -3,8 +3,8 @@
 #include <iostream>
 #include "Renderer.h"
 
-Model::Model(const std::string &path) :
-    m_meshes{}, m_directory{}, m_transform{}
+Model::Model(const std::string& path, const std::string& name) :
+    m_name{ name }, m_meshes {}, m_directory{}, m_transform{}
 {
     LoadModel(path);
 }
@@ -72,9 +72,4 @@ void Model::LoadNewModel(std::string const& path)
     }
     m_meshes.clear();
     this->LoadModel(path);
-}
-
-const std::string& Model::GetFilePath() const
-{
-    return m_path;
 }
