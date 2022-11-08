@@ -112,8 +112,8 @@ int main()
     postprocessing_shader.Bind();
     postprocessing_shader.SetUniform1i("screen_quad_texture", 0);
 
-    FrameBuffer pre_processed_frame_buffer{ window.GetScreenWidth(), window.GetScreenHeight()};
-    FrameBuffer post_processed_buffer{ window.GetScreenWidth(), window.GetScreenHeight() };
+    FrameBuffer pre_processed_framebuffer{ window.GetScreenWidth(), window.GetScreenHeight()};
+    FrameBuffer post_processed_framebuffer{ window.GetScreenWidth(), window.GetScreenHeight() };
 
     skybox_shader.Bind();
     skybox_shader.SetUniform1i("skybox", 0);
@@ -127,10 +127,10 @@ int main()
         last_frame = current_frame;
         processInput(window.GetGLFWwindow());
 
-        pre_processed_frame_buffer.Bind();
+        pre_processed_framebuffer.Bind();
         renderer.Clear(background_color, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         
-        bool window_resized{ UpdateWindowDimensionDependencies(projection, &window, &camera, &pre_processed_frame_buffer) };
+        bool window_resized{ UpdateWindowDimensionDependencies(projection, &window, &camera, &pre_processed_framebuffer) };
 
         point_light.GetModel().GetTransform().UpdateMVP(camera.GetViewMatrix(), projection);
 
@@ -169,22 +169,22 @@ int main()
             renderer.DrawSkybox(skybox, camera.GetViewMatrix(), projection, skybox_shader);
         }
 
-        pre_processed_frame_buffer.Unbind();
-        post_processed_buffer.Bind();
+        pre_processed_framebuffer.Unbind();
+        pre_processed_framebuffer.BindTextureColorBuffer();
+        post_processed_framebuffer.Bind();
         renderer.Clear(background_color, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         
         if (window_resized)
         {
-            post_processed_buffer.Resize(window.GetScreenWidth(), window.GetScreenHeight());
+            post_processed_framebuffer.Resize(window.GetScreenWidth(), window.GetScreenHeight());
         }
 
         postprocessing_shader.Bind();
-        pre_processed_frame_buffer.BindTextureColorBuffer();
         renderer.DrawArrays(screen_quad_VAO, postprocessing_shader, NUM_OF_SCREEN_QUAD_VERTICES);
-        post_processed_buffer.Unbind();
-        post_processed_buffer.BindTextureColorBuffer();
+        post_processed_framebuffer.Unbind();
+        post_processed_framebuffer.BindTextureColorBuffer();
         Editor::BeginRender();
-        Editor::GeneratePanels(projection, &window, &camera, &post_processed_buffer, &model_3D, background_color, postprocessing_shader, current_frame, &directional_light, &point_light);
+        Editor::GeneratePanels(projection, &window, &camera, &post_processed_framebuffer, &model_3D, background_color, postprocessing_shader, current_frame, &directional_light, &point_light);
         Editor::EndRender();
 
         window.Update();
