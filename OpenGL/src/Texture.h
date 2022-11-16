@@ -13,7 +13,6 @@ public:
 		Normal,
 		Height,
 		Roughness,
-		CubeMap,
 		Alpha,
 
 		None
@@ -24,14 +23,12 @@ public:
 public:
 	Texture(const std::string &file_path, const std::string &file_name, Type type, bool flip_vertically_on_load);
 	Texture(const Texture& texture);
-	Texture(const char *file_paths[]);
 
 	~Texture();
 
 	void Bind() const;
 	void Unbind() const;
 	void Load(const char* file_path, bool flip_vertically_on_load);
-	void LoadCubeMap(const char* file_paths[]);
 
 	uint32_t GetID() const;
 	Texture::Type GetType()  const;

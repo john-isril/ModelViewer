@@ -204,8 +204,7 @@ void Renderer::DrawSkybox(Skybox& skybox, const glm::mat4& view, const glm::mat4
 {
     glDepthFunc(GL_LEQUAL);
     shader.Bind();
-    const glm::mat4 skybox_view = glm::mat4(glm::mat3(view));
-    shader.SetUniformMat4f("view", skybox_view);
+    shader.SetUniformMat4f("view", glm::mat4(glm::mat3(view))); // sets translation to 0 because we don't need to translate it
     shader.SetUniformMat4f("projection", projection);
     skybox.Activate();
     glDrawArrays(GL_TRIANGLES, 0, 36);

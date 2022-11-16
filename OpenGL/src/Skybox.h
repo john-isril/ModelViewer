@@ -2,7 +2,8 @@
 #include "VertexArray.h"
 #include "VertexBufferLayout.h"
 #include "VertexBuffer.h"
-#include "Texture.h"
+#include "Cubemap.h"
+#include <string>
 
 class Skybox
 {
@@ -10,8 +11,7 @@ private:
 	VertexArray m_VAO;
 	VertexBuffer m_VBO;
 	VertexBufferLayout m_Layout;
-	Texture m_texture;
-
+	Cubemap m_cubemap;
 	
 public:
     static constexpr float m_skybox_vertices[]
@@ -60,7 +60,9 @@ public:
     };
 
 public:
-	Skybox(const char* cubemap_file_paths[]);
+	Skybox(const std::string file_paths[Cubemap::NUM_OF_FACES]);
+    Skybox(const std::string& right, const std::string& left, const std::string& top, const std::string& bottom, const std::string& front, const std::string& back);
+    ~Skybox();
     void Activate();
     void Deactivate();
 };

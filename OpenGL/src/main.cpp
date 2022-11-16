@@ -77,16 +77,13 @@ int main()
     screen_quad_VAO.AddBufferLayout(screen_quad_buffer, screen_quad_layout);
 
     //////////////////////////////////////////////////////////////////////// SKYBOX ///////////////////////////////////////////////////////////////
-    const char* cubemap_file_paths[]{
-        "Assets/skybox/right.jpg",
-        "Assets/skybox/left.jpg",
-        "Assets/skybox/top.jpg",
-        "Assets/skybox/bottom.jpg",
-        "Assets/skybox/front.jpg",
-        "Assets/skybox/back.jpg"
-    };
 
-    Skybox skybox{ cubemap_file_paths };
+    Skybox skybox{ "Assets/skybox/SanFrancisco4/posx.jpg",
+        "Assets/skybox/SanFrancisco4/negx.jpg",
+        "Assets/skybox/SanFrancisco4/posy.jpg",
+        "Assets/skybox/SanFrancisco4/negy.jpg",
+        "Assets/skybox/SanFrancisco4/posz.jpg",
+        "Assets/skybox/SanFrancisco4/negz.jpg" };
 
     //////////////////////////////////////////////////////////////////////// 3D MODEL ///////////////////////////////////////////////////////////////
     Model model_3D("Assets/backpack/backpack.obj");

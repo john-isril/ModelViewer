@@ -5,18 +5,13 @@
 Texture::Texture(const std::string& file_path, const std::string& file_name, Type type, bool flip_vertically_on_load)
 	: m_ID{}, m_buffer{ nullptr }, m_width{}, m_height{}, m_color_channels{}, m_type{ type }, m_file_name{ file_name }, m_file_path{file_path}, m_flip_uv{flip_vertically_on_load}
 {
+	glGenTextures(1, &m_ID);
 	this->Load(file_path.c_str(), flip_vertically_on_load);
 }
 
 Texture::Texture(const Texture& texture) :
 	Texture(texture.m_file_path, texture.m_file_name, texture.m_type, texture.m_flip_uv)
 {
-}
-
-Texture::Texture(const char* file_paths[]) :
-	m_ID{}, m_buffer{ nullptr }, m_width{}, m_height{}, m_color_channels{}, m_type{ Texture::Type::CubeMap }
-{
-	this->LoadCubeMap(file_paths);
 }
 
 Texture::~Texture()
@@ -26,32 +21,16 @@ Texture::~Texture()
 
 void Texture::Bind() const
 {
-	if (m_type == Texture::Type::CubeMap)
-	{
-		glBindTexture(GL_TEXTURE_CUBE_MAP, m_ID);
-	}
-	else
-	{
-		glBindTexture(GL_TEXTURE_2D, m_ID);
-	}
+	glBindTexture(GL_TEXTURE_2D, m_ID);
 }
 
 void Texture::Unbind() const
 {
-	if (m_type == Texture::Type::CubeMap)
-	{
-		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-	}
-	else
-	{
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Texture::Load(const char* file_path, bool flip_vertically_on_load)
 {
-	glGenTextures(1, &m_ID);
-
 	stbi_set_flip_vertically_on_load(flip_vertically_on_load);
 
 	m_buffer = stbi_load(file_path, &m_width, &m_height, &m_color_channels, 0);
@@ -93,36 +72,6 @@ void Texture::Load(const char* file_path, bool flip_vertically_on_load)
 	}
 
 	stbi_image_free(m_buffer);
-}
-
-void Texture::LoadCubeMap(const char* file_paths[])
-{
-	glGenTextures(1, &m_ID);
-	this->Bind();
-
-	stbi_set_flip_vertically_on_load(false);
-	
-	for (uint8_t i{ 0 }; i < NUM_OF_CUBE_FACES; ++i)
-	{
-		m_buffer = stbi_load(file_paths[i], &m_width, &m_height, &m_color_channels, 0);
-		
-		if (m_buffer)
-		{
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, m_buffer);
-		}
-		else
-		{
-			std::cerr << "Failed to load cubemap texture at file \n" << file_paths[i];
-		}
-
-		stbi_image_free(m_buffer);
-	}
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 }
 
 uint32_t Texture::GetID() const
