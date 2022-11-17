@@ -6,7 +6,7 @@
 #include "Shader.h"
 #include "Texture.h"
 #include "Model.h"
-#include "DebugUtils.h"
+#include "Debugging/DebugUtils.h"
 
 Renderer::Renderer() 
 {
@@ -21,7 +21,7 @@ void Renderer::Init()
         glfwTerminate();
     }
 
-    std::cout << glGetString(GL_VERSION) << std::endl;
+    std::cout << glGetString(GL_VERSION) << '\n';
 
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);

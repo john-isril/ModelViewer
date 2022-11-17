@@ -88,7 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\GLFW\include;$(ProjectDir)Dependencies\glad\include;$(ProjectDir)Dependencies\stb_image;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\DearImGUI;$(ProjectDir)Dependencies\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\GLFW\include;$(ProjectDir)Dependencies\glad\include;$(ProjectDir)Dependencies\stb_image;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\DearImGUI;$(ProjectDir)Dependencies\assimp\include;$(ProjectDir)Dependencies\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -106,7 +106,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\GLFW\include;$(ProjectDir)Dependencies\glad\include;$(ProjectDir)Dependencies\stb_image;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\DearImGUI;$(ProjectDir)Dependencies\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\GLFW\include;$(ProjectDir)Dependencies\glad\include;$(ProjectDir)Dependencies\stb_image;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\DearImGUI;$(ProjectDir)Dependencies\assimp\include;$(ProjectDir)Dependencies\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -124,7 +124,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\GLFW\include;$(ProjectDir)Dependencies\glad\include;$(ProjectDir)Dependencies\stb_image;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\DearImGUI;$(ProjectDir)Dependencies\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\GLFW\include;$(ProjectDir)Dependencies\glad\include;$(ProjectDir)Dependencies\stb_image;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\DearImGUI;$(ProjectDir)Dependencies\assimp\include;$(ProjectDir)Dependencies\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -142,7 +142,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\GLFW\include;$(ProjectDir)Dependencies\glad\include;$(ProjectDir)Dependencies\stb_image;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\DearImGUI;$(ProjectDir)Dependencies\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\GLFW\include;$(ProjectDir)Dependencies\glad\include;$(ProjectDir)Dependencies\stb_image;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\DearImGUI;$(ProjectDir)Dependencies\assimp\include;$(ProjectDir)Dependencies\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -165,6 +165,7 @@
     <ClCompile Include="Dependencies\glad\src\glad.c" />
     <ClCompile Include="Dependencies\glm\glm\detail\glm.cpp" />
     <ClCompile Include="Dependencies\stb_image\stb_image.cpp" />
+    <ClCompile Include="src\Debugging\Log.cpp" />
     <ClCompile Include="src\Cubemap.cpp" />
     <ClCompile Include="src\Lights\DirectionalLight.cpp" />
     <ClCompile Include="src\Lights\Light.cpp" />
@@ -345,6 +346,7 @@
     <ClInclude Include="Dependencies\glm\glm\vec4.hpp" />
     <ClInclude Include="Dependencies\glm\glm\vector_relational.hpp" />
     <ClInclude Include="Dependencies\stb_image\stb_image.h" />
+    <ClInclude Include="src\Debugging\Log.h" />
     <ClInclude Include="src\Cubemap.h" />
     <ClInclude Include="src\DirectionalLight.h" />
     <ClInclude Include="src\Light.h" />
@@ -354,7 +356,7 @@
     <ClInclude Include="src\PointLight.h" />
     <ClInclude Include="src\Skybox.h" />
     <ClInclude Include="src\Camera.h" />
-    <ClInclude Include="src\DebugUtils.h" />
+    <ClInclude Include="src\Debugging\DebugUtils.h" />
     <ClInclude Include="src\Editor.h" />
     <ClInclude Include="src\FilterType.h" />
     <ClInclude Include="src\FrameBuffer.h" />

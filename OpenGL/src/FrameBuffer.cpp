@@ -5,7 +5,7 @@
 FrameBuffer::FrameBuffer(uint32_t width, uint32_t height) :
     m_ID{}, m_render_buffer_id{}, m_texture_color_buffer_id{}, m_width{ width }, m_height{ height }
 {
-	glGenFramebuffers(1, &m_ID);
+	glGenFramebuffers(1, &m_ID) ;
 	glBindFramebuffer(GL_FRAMEBUFFER, m_ID);
 
     glGenTextures(1, &m_texture_color_buffer_id);
@@ -22,7 +22,7 @@ FrameBuffer::FrameBuffer(uint32_t width, uint32_t height) :
     
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
-        std::cerr << "ERROR::FRAMEBUFFER:: Incomplete Frame Buffer" << std::endl;
+        std::cerr << "ERROR::FRAMEBUFFER:: Incomplete Frame Buffer\n";
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

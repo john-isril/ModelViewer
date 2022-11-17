@@ -21,6 +21,7 @@
 #include "Lights/PointLight.h"
 #include "Lights/DirectionalLight.h"
 #include "Window.h"
+#include "Debugging/Log.h"
 
 constexpr char GLSL_version[]{ "#version 460" };
 
@@ -35,6 +36,9 @@ static Camera camera{ Transform{glm::vec3 {0.0f}, Rotation{0.0f, -90.0f, 0.0f}, 
 
 int main()
 {
+    Log::Init();
+    LOG_INFO("Logger initialized!\n");
+
     Window window{ "3D Model Viewer" };
     window.SetScrollCallback(scroll_callback);
 

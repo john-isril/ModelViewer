@@ -1,0 +1,3 @@
+[submodule "OpenGL/Dependencies/spdlog"]
+	path = OpenGL/Dependencies/spdlog
+	url = https://github.com/gabime/spdlog

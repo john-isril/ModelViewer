@@ -19,7 +19,7 @@ void Model::LoadModel(std::string const& path)
 {
     if (m_path == path)
     {
-        std::cerr << "Model already loaded!" << std::endl;
+        std::cerr << "Model already loaded!\n";
         return;
     }
 
@@ -29,7 +29,7 @@ void Model::LoadModel(std::string const& path)
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
-        std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
+        std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << '\n';
         return;
     }
 
@@ -67,7 +67,7 @@ void Model::LoadNewModel(std::string const& path)
 {
     if (m_path == path)
     {
-        std::cerr << "Model already loaded!" << std::endl;
+        std::cerr << "Model already loaded!\n";
         return;
     }
     m_meshes.clear();
