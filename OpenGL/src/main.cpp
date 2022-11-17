@@ -37,7 +37,7 @@ static Camera camera{ Transform{glm::vec3 {0.0f}, Rotation{0.0f, -90.0f, 0.0f}, 
 int main()
 {
     Log::Init();
-    LOG_INFO("Logger initialized!\n");
+    Log::LogError("Logger initialized!\n");
 
     Window window{ "3D Model Viewer" };
     window.SetScrollCallback(scroll_callback);
