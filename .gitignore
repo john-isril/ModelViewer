@@ -430,4 +430,4 @@ FodyWeavers.xsd
 *.sln.iml
 
 # Custom
-h.txt
+/OpenGL/src/h.txt
