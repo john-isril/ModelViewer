@@ -30,7 +30,6 @@ static float delta_time{ 0.0f };
 
 static void processInput(GLFWwindow* window);
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-static bool UpdateWindowDimensionDependencies(glm::mat4& projection_matrix, Window* window, Camera* camera = nullptr, FrameBuffer* fame_buffer = nullptr);
 
 static Camera camera{ Transform{glm::vec3 {0.0f}, Rotation{0.0f, -90.0f, 0.0f}, glm::vec3 {0.0f, 0.0f, 3.0f}} };
 
@@ -62,7 +61,7 @@ int main()
     ////////////////////////////////////////////////////////// POST PROCESSING SCREEN QUAD /////////////////////////////////////////////////
     constexpr uint8_t NUM_OF_SCREEN_QUAD_VERTICES{ 6 };
 
-    float screen_quad_vertices[] {
+    float screen_quad_vertices[]{
         // positions   // texture coordinates
         -1.0f,  1.0f,  0.0f, 1.0f,
         -1.0f, -1.0f,  0.0f, 0.0f,
@@ -93,7 +92,7 @@ int main()
     Model model_3D("Assets/backpack/backpack.obj");
 
     model_shader.Bind();
-    
+
     model_shader.SetUniform1f("directional_light.brightness", directional_light.GetBrightness());
     model_shader.SetUniformVec3f("directional_light.direction", directional_light.GetDirection());
     model_shader.SetUniformVec4f("directional_light.ambient", directional_light.GetAmbient());
@@ -113,8 +112,9 @@ int main()
     postprocessing_shader.Bind();
     postprocessing_shader.SetUniform1i("screen_quad_texture", 0);
 
-    FrameBuffer pre_processed_framebuffer{ window.GetScreenWidth(), window.GetScreenHeight()};
-    FrameBuffer post_processed_framebuffer{ window.GetScreenWidth(), window.GetScreenHeight() };
+    FrameBuffer multisampled_framebuffer{ window.GetScreenWidth(), window.GetScreenHeight(), 8 };
+    FrameBuffer post_processed_framebuffer{ window.GetScreenWidth(), window.GetScreenHeight(), 0 };
+    FrameBuffer editor_framebuffer{ window.GetScreenWidth(), window.GetScreenHeight(), 0 };
 
     skybox_shader.Bind();
     skybox_shader.SetUniform1i("skybox", 0);
@@ -128,10 +128,16 @@ int main()
         last_frame = current_frame;
         processInput(window.GetGLFWwindow());
 
-        pre_processed_framebuffer.Bind();
+        if (window.Resized())
+        {
+            multisampled_framebuffer.Resize(window.GetScreenWidth(), window.GetScreenHeight());
+            post_processed_framebuffer.Resize(window.GetScreenWidth(), window.GetScreenHeight());
+            editor_framebuffer.Resize(window.GetScreenWidth(), window.GetScreenHeight());
+            projection = glm::perspective(glm::radians(camera.GetFieldOfView()), static_cast<float>(window.GetScreenWidth()) / static_cast<float>(window.GetScreenHeight()), camera.GetNearPlaneDistance(), camera.GetFarPlaneDistance());
+        }
+
+        multisampled_framebuffer.Bind();
         renderer.Clear(background_color, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        
-        bool window_resized{ UpdateWindowDimensionDependencies(projection, &window, &camera, &pre_processed_framebuffer) };
 
         point_light.GetModel().GetTransform().UpdateMVP(camera.GetViewMatrix(), projection);
 
@@ -145,7 +151,7 @@ int main()
             light_sphere_shader.SetUniform1f("light_brightness", point_light.GetBrightnessOffOn());
             renderer.DrawModel(point_light.GetModel(), light_sphere_shader);
 
-            renderer.DrawModelOutline(point_light.GetModel(), camera.GetViewMatrix(), projection, outline_shader, 0.005f, glm::vec3{0.0f});
+            renderer.DrawModelOutline(point_light.GetModel(), camera.GetViewMatrix(), projection, outline_shader, 0.005f, glm::vec3{ 0.0f });
             renderer.DisableOutlining();
         }
 
@@ -164,28 +170,22 @@ int main()
         model_shader.SetUniformVec3f("view_position", camera.GetPosition());
 
         renderer.DrawModel(model_3D, model_shader);
-        
+
         if (Editor::ShowSkybox())
         {
             renderer.DrawSkybox(skybox, camera.GetViewMatrix(), projection, skybox_shader);
         }
 
-        pre_processed_framebuffer.Unbind();
-        pre_processed_framebuffer.BindTextureColorBuffer();
-        post_processed_framebuffer.Bind();
+        FrameBuffer::ResolveMultsampledFrameBuffer(&multisampled_framebuffer, &post_processed_framebuffer);
+        post_processed_framebuffer.BindTextureColorBuffer();
+        editor_framebuffer.Bind();
         renderer.Clear(background_color, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        
-        if (window_resized)
-        {
-            post_processed_framebuffer.Resize(window.GetScreenWidth(), window.GetScreenHeight());
-        }
 
         postprocessing_shader.Bind();
         renderer.DrawArrays(screen_quad_VAO, postprocessing_shader, NUM_OF_SCREEN_QUAD_VERTICES);
-        post_processed_framebuffer.Unbind();
-        post_processed_framebuffer.BindTextureColorBuffer();
+        editor_framebuffer.Unbind();
         Editor::BeginRender();
-        Editor::GeneratePanels(projection, &window, &camera, &post_processed_framebuffer, &model_3D, background_color, postprocessing_shader, current_frame, &directional_light, &point_light);
+        Editor::GeneratePanels(projection, &window, &camera, &editor_framebuffer, &model_3D, background_color, postprocessing_shader, current_frame, &directional_light, &point_light);
         Editor::EndRender();
 
         window.Update();
@@ -197,7 +197,7 @@ int main()
 }
 
 static void processInput(GLFWwindow* window)
-{ 
+{
     if (Input::IsKeyPressed(window, Key::Escape))
     {
         glfwSetWindowShouldClose(window, true);
@@ -239,25 +239,4 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
         float z_offset{ static_cast<float>(yoffset) * 400.0f };
         camera.Walk(0.0f, z_offset, delta_time);
     }
-}
-
-static bool UpdateWindowDimensionDependencies(glm::mat4 &projection_matrix, Window *window, Camera *camera, FrameBuffer *fame_buffer)
-{
-    static uint32_t current_window_width{};
-    static uint32_t current_window_height{};
-
-    if (window && ((current_window_width != window->GetScreenWidth()) || (current_window_height != window->GetScreenHeight())))
-    {
-        current_window_width = window->GetScreenWidth();
-        current_window_height = window->GetScreenHeight();
-
-        if (fame_buffer)
-        {
-            fame_buffer->Resize(current_window_width, current_window_height);
-            projection_matrix = glm::perspective(glm::radians(camera->GetFieldOfView()), static_cast<float>(current_window_width) / static_cast<float>(current_window_height), camera->GetNearPlaneDistance(), camera->GetFarPlaneDistance());
-            return true;
-        }
-    }
-
-    return false;
 }

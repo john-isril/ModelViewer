@@ -38,8 +38,10 @@ Window::~Window()
     glfwTerminate();
 }
 
-void Window::Update() const
+void Window::Update()
 {
+    m_width_prev = m_width;
+    m_height_prev = m_height;
     glfwSwapBuffers(m_window);
     glfwPollEvents();
 }
@@ -89,8 +91,18 @@ uint32_t Window::GetScreenHeightMid() const
     return m_height_mid;
 }
 
+bool Window::Resized() const
+{
+    if ((m_width != m_width_prev) || (m_height != m_height_prev))
+    {
+        return true;
+        std::cout << "resized\n";
+    }
+    return false;
+}
+
 void frame_buffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    glViewport(0, 0, width, height);
     callback_window_ref->Resize(width, height);
+    glViewport(0, 0, width, height);
 }

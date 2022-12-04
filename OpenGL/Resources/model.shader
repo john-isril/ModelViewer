@@ -7,21 +7,32 @@ layout(location = 2) in vec2 texture_coordinates_in;
 
 uniform mat4 model;
 uniform mat4 mvp;
-out vec2 texture_coordinates;
-out vec3 fragment_position;
-out vec3 normal;
+
+out VS_OUT
+{
+	vec2 texture_coordinates;
+	vec3 fragment_position;
+	vec3 normal;
+} vs_out;
 
 void main()
 {
 	gl_Position = mvp * vec4(position, 1.0);
-	texture_coordinates = texture_coordinates_in;
-	fragment_position = vec3(model * vec4(position, 1.0)); // coverts the position to world coordinates
+	vs_out.texture_coordinates = texture_coordinates_in;
+	vs_out.fragment_position = vec3(model * vec4(position, 1.0)); // coverts the position to world coordinates
 	// todo: figure out how to move this to cpu
-	normal = mat3(transpose(inverse(model))) * normal_in;
+	vs_out.normal = mat3(transpose(inverse(model))) * normal_in;
 };
 
 #shader fragment
 #version 460 core
+
+in VS_OUT
+{
+	vec2 texture_coordinates;
+	vec3 fragment_position;
+	vec3 normal;
+} fs_in;
 
 struct Material
 {
@@ -74,10 +85,6 @@ struct SpotLight
 	vec3 specular;
 };
 
-in vec2 texture_coordinates;
-in vec3 normal;
-in vec3 fragment_position;
-
 out vec4 FragColor;
 
 uniform Material material;
@@ -94,12 +101,12 @@ vec4 CalcPointLight(PointLight light, vec3 normal, vec3 fragment_position, vec3 
 void main()
 {
 
-	vec3 object_normal = normalize(normal);
-	vec3 object_to_view_direction = normalize(view_position - fragment_position);
+	vec3 object_normal = normalize(fs_in.normal);
+	vec3 object_to_view_direction = normalize(view_position - fs_in.fragment_position);
 
 	vec4 result = vec4(0.0, 0.0, 0.0, 0.0);
 	result += CalcDirectionalLight(directional_light, object_normal, object_to_view_direction);
-	result += CalcPointLight(point_light, object_normal, fragment_position, object_to_view_direction);
+	result += CalcPointLight(point_light, object_normal, fs_in.fragment_position, object_to_view_direction);
 
 	FragColor = result;
 };
@@ -108,7 +115,7 @@ vec4 CalcDirectionalLight(DirectionalLight light, vec3 normal, vec3 view_directi
 {
 	vec3 object_to_light_direction = normalize(-light.direction);
 
-	vec4 ambient_light = light.ambient * texture(material.diffuse1, texture_coordinates);
+	vec4 ambient_light = light.ambient * texture(material.diffuse1, fs_in.texture_coordinates);
 
 	if (ambient_light.a < 0.1)
 	{
@@ -116,11 +123,11 @@ vec4 CalcDirectionalLight(DirectionalLight light, vec3 normal, vec3 view_directi
 	}
 
 	float diffuse_strength = max(dot(normal, object_to_light_direction), 0.0);
-	vec4 diffuse_light = light.diffuse * texture(material.diffuse1, texture_coordinates) * diffuse_strength;
+	vec4 diffuse_light = light.diffuse * texture(material.diffuse1, fs_in.texture_coordinates) * diffuse_strength;
 
 	vec3 light_reflection_direction = reflect(object_to_light_direction, normal);
 	float specular_strength = pow(max(dot(view_direction, light_reflection_direction), 0.0), material.shininess);
-	vec4 specular_light = specular_strength * light.specular * texture(material.specular1, texture_coordinates);
+	vec4 specular_light = specular_strength * light.specular * texture(material.specular1, fs_in.texture_coordinates);
 
 	return ambient_light + (light.brightness * (diffuse_light + specular_light));
 }
@@ -130,7 +137,7 @@ vec4 CalcPointLight(PointLight light, vec3 normal, vec3 fragment_position, vec3 
 	vec3 object_to_light_direction = normalize(light.position - fragment_position);
 
 	// ambient
-	vec4 ambient_light = light.ambient * texture(material.diffuse1, texture_coordinates);
+	vec4 ambient_light = light.ambient * texture(material.diffuse1, fs_in.texture_coordinates);
 	
 	if (ambient_light.a < 0.1)
 	{
@@ -139,13 +146,13 @@ vec4 CalcPointLight(PointLight light, vec3 normal, vec3 fragment_position, vec3 
 
 	// diffuse
 	float diffuse_strength = max(dot(normal, object_to_light_direction), 0.0);
-	vec4 diffuse_light = light.diffuse * diffuse_strength * texture(material.diffuse1, texture_coordinates);
+	vec4 diffuse_light = light.diffuse * diffuse_strength * texture(material.diffuse1, fs_in.texture_coordinates);
 
 	// specular
 	vec3 light_reflection_direction = reflect(-object_to_light_direction, normal);
 	float specular_strength = pow(max(dot(view_direction, light_reflection_direction), 0.0), material.shininess);
 
-	vec4 specular_light = specular_strength * light.specular * texture(material.specular1, texture_coordinates);
+	vec4 specular_light = specular_strength * light.specular * texture(material.specular1, fs_in.texture_coordinates);
 
 	float distance = length(light.position - fragment_position);
 	float attenuation = 1.0 / (light.constant + light.linear_ * distance + light.quadratic * (distance * distance));

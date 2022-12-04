@@ -25,10 +25,10 @@ void Renderer::Init()
 
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glEnable(GL_MULTISAMPLE);
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
+    glEnable(GL_MULTISAMPLE);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
     glFrontFace(GL_CW);
