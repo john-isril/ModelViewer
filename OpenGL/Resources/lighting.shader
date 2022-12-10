@@ -119,8 +119,8 @@ vec3 CalcDirectionalLight(DirectionalLight light, vec3 normal, vec3 view_directi
 	float diffuse_strength = max(dot(normal, object_to_light_direction), 0.0);
 	vec3 diffuse_light = light.diffuse * vec3(texture(material.diffuse, texture_coordinates)) * diffuse_strength;
 
-	vec3 light_reflection_direction = reflect(object_to_light_direction, normal);
-	float specular_strength = pow(max(dot(view_direction, light_reflection_direction), 0.0), material.shininess);
+	vec3 halfway_direction = normalize(object_to_light_direction + view_direction);
+	float specular_strength = pow(max(dot(normal, halfway_direction), 0.0), material.shininess);
 	vec3 specular_light = specular_strength * light.specular * vec3(texture(material.specular, texture_coordinates));
 
 	return ambient_light + (light.brightness * (diffuse_light + specular_light));
@@ -138,8 +138,8 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragment_position, vec3 
 	vec3 diffuse_light = light.diffuse * diffuse_strength * vec3(texture(material.diffuse, texture_coordinates));
 
 	// specular
-	vec3 light_reflection_direction = reflect(-object_to_light_direction, normal);
-	float specular_strength = pow(max(dot(view_direction, light_reflection_direction), 0.0), material.shininess);
+	vec3 halfway_direction = normalize(object_to_light_direction + view_direction);
+	float specular_strength = pow(max(dot(normal, halfway_direction), 0.0), material.shininess);
 
 	float distance = length(light.position - fragment_position);
 	float attenuation = 1.0 / (light.constant + light.linear_ * distance + light.quadratic * (distance * distance));
@@ -159,8 +159,8 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragment_position, vec3 vi
 	float diffuse_strength = max(dot(normal, object_to_light_direction), 0.0);
 	vec3 diffuse_light = light.diffuse * vec3(texture(material.diffuse, texture_coordinates)) * diffuse_strength;
 
-	vec3 light_reflection_direction = reflect(object_to_light_direction, normal);
-	float specular_strength = pow(max(dot(view_direction, light_reflection_direction), 0.0), material.shininess);
+	vec3 halfway_direction = normalize(object_to_light_direction + view_direction);
+	float specular_strength = pow(max(dot(normal, halfway_direction), 0.0), material.shininess);
 	vec3 specular_light = specular_strength * light.specular * vec3(texture(material.specular, texture_coordinates));
 
 	float distance = length(light.position - fragment_position);
