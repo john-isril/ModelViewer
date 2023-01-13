@@ -2,35 +2,108 @@
 #include <glad/glad.h>
 #include <string.h>
 
-VertexBuffer::VertexBuffer() :
-	m_ID{}, m_data{nullptr}, m_data_size{0}
+VertexBuffer::VertexBuffer()
 {
+	m_ID = 0;
+	m_size = 0;
+	m_data = nullptr;
+	m_usage = BufferObject::Usage::STATIC;
+
 	glGenBuffers(1, &m_ID);
 }
 
-VertexBuffer::VertexBuffer(void* data, size_t size)
-	: m_ID{}, m_data{data}, m_data_size{size}
+VertexBuffer::VertexBuffer(void* data, size_t size, BufferObject::Usage usage)
 {
+	m_ID = 0;
+	m_size = size;
 	m_data = data;
+	m_usage = usage;
+
 	glGenBuffers(1, &m_ID);
 	glBindBuffer(GL_ARRAY_BUFFER, m_ID);
-	glBufferData(GL_ARRAY_BUFFER, m_data_size, m_data, GL_STATIC_DRAW);
+	// Usage is a hint to tell the GPU how the buffer data will be used.
+	// GL_STATIC_DRAW: Data in the buffer object will be set once and used many times.
+	// GL_DYNAMIC_DRAw: Data in the buffer object will be set many times and used many times.
+	// GL_stream_DRAw: Data in the buffer object will be set once and used once times.
+
+	switch (m_usage)
+	{
+	case BufferObject::Usage::DYNAMIC:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_DYNAMIC_DRAW);
+		break;
+
+	case BufferObject::Usage::STREAM:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_STREAM_DRAW);
+		break;
+
+	case BufferObject::Usage::STATIC:
+		[[fallthrough]];
+
+	default:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_STATIC_DRAW);
+		break;
+	}
 }
 
-VertexBuffer::VertexBuffer(const VertexBuffer& vb) :
-	m_ID{}, m_data_size{vb.m_data_size}
+VertexBuffer::VertexBuffer(const VertexBuffer& vb)
 {
-	memcpy(m_data, vb.m_data, m_data_size);
+	m_ID = 0;
+	m_size = vb.m_size;
+	m_usage = vb.m_usage;
+
+	m_data = vb.m_data;
+
 	glGenBuffers(1, &m_ID);
 	glBindBuffer(GL_ARRAY_BUFFER, m_ID);
-	glBufferData(GL_ARRAY_BUFFER, m_data_size, m_data, GL_STATIC_DRAW);
+
+	switch (m_usage)
+	{
+	case BufferObject::Usage::DYNAMIC:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_DYNAMIC_DRAW);
+		break;
+
+	case BufferObject::Usage::STREAM:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_STREAM_DRAW);
+		break;
+
+	case BufferObject::Usage::STATIC:
+		[[fallthrough]];
+
+	default:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_STATIC_DRAW);
+		break;
+	}
 }
 
-VertexBuffer::VertexBuffer(VertexBuffer&& vb) :
-	m_ID{vb.m_ID}, m_data{vb.m_data}, m_data_size{vb.m_data_size}
+VertexBuffer::VertexBuffer(VertexBuffer&& vb)
 {
-	vb.m_ID = 0;
+	m_ID = vb.m_ID;
+	m_size = vb.m_size;
+	m_data = vb.m_data;
+	m_usage = vb.m_usage;
+
 	vb.m_data = nullptr;
+
+	glGenBuffers(1, &m_ID);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ID);
+
+	switch (m_usage)
+	{
+	case BufferObject::Usage::DYNAMIC:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_DYNAMIC_DRAW);
+		break;
+
+	case BufferObject::Usage::STREAM:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_STREAM_DRAW);
+		break;
+
+	case BufferObject::Usage::STATIC:
+		[[fallthrough]];
+
+	default:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_STATIC_DRAW);
+		break;
+	}
 }
 
 VertexBuffer& VertexBuffer::operator=(const VertexBuffer& rhs)
@@ -41,14 +114,35 @@ VertexBuffer& VertexBuffer::operator=(const VertexBuffer& rhs)
 	}
 
 	m_ID = 0;
-	m_data_size = rhs.m_data_size;
-	memcpy(m_data, rhs.m_data, m_data_size);
+	m_size = rhs.m_size;
+	m_usage = rhs.m_usage;
+
+	m_data = rhs.m_data;
+
 	glGenBuffers(1, &m_ID);
 	glBindBuffer(GL_ARRAY_BUFFER, m_ID);
-	glBufferData(GL_ARRAY_BUFFER, m_data_size, m_data, GL_STATIC_DRAW);
+
+	switch (m_usage)
+	{
+	case BufferObject::Usage::DYNAMIC:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_DYNAMIC_DRAW);
+		break;
+
+	case BufferObject::Usage::STREAM:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_STREAM_DRAW);
+		break;
+
+	case BufferObject::Usage::STATIC:
+		[[fallthrough]];
+
+	default:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_STATIC_DRAW);
+		break;
+	}
 
 	return *this;
 }
+
 
 VertexBuffer::~VertexBuffer()
 {
@@ -68,7 +162,24 @@ void VertexBuffer::Unbind() const
 void VertexBuffer::BindBufferData(void* data, size_t size)
 {
 	m_data = data;
-	m_data_size = size;
+	m_size = size;
 	glBindBuffer(GL_ARRAY_BUFFER, m_ID);
-	glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+
+	switch (m_usage)
+	{
+	case BufferObject::Usage::DYNAMIC:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_DYNAMIC_DRAW);
+		break;
+
+	case BufferObject::Usage::STREAM:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_STREAM_DRAW);
+		break;
+
+	case BufferObject::Usage::STATIC:
+		[[fallthrough]];
+
+	default:
+		glBufferData(GL_ARRAY_BUFFER, m_size, m_data, GL_STATIC_DRAW);
+		break;
+	}
 }

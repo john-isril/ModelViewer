@@ -33,20 +33,21 @@ void main()
     const float TAU = 6.28;
 
     vec4 texture_color = vec4(texture(screen_quad_texture, texture_coordinates).rgb, 1.0);
+    vec4 color = vec4(0.0);
 
     switch (filter_type) 
     {
     case 0:
-        FragColor = texture_color;
+        color = texture_color;
         break;
 
     case 1:
-        FragColor = vec4(vec3(1.0 - texture(screen_quad_texture, texture_coordinates)), 1.0);
+        color = vec4(vec3(1.0 - texture(screen_quad_texture, texture_coordinates)), 1.0);
         break;
 
     case 2:
         float average = (texture_color.r + texture_color.g + texture_color.b) / 3.0;
-        FragColor = vec4(average, average, average, 1.0);
+        color = vec4(average, average, average, 1.0);
         break;
 
     case 3:
@@ -55,7 +56,7 @@ void main()
         final_color.rgb *= 1.0 - smoothstep(inner_vignette_radius, outer_vignette_radius, length(centered));
         final_color *= texture_color;
 
-        FragColor = mix(texture_color, final_color, vignette_intensity);
+        color = mix(texture_color, final_color, vignette_intensity);
         break;
 
     case 4:
@@ -76,17 +77,19 @@ void main()
         if (texture_coordinates.x < 0.5 + 0.5 * cosine_time)
         {
             float greyVal = (texture_color.x + texture_color.y + texture_color.z) / 3.0;
-            FragColor = vec4(greyVal, greyVal, greyVal, 1.0);
+            color = vec4(greyVal, greyVal, greyVal, 1.0);
         }
         else
         {
-            FragColor = texture_color;
+            color = texture_color;
         }
 
         break;
 
     default:
-        FragColor = vec4(texture(screen_quad_texture, texture_coordinates).rgb, 1.0);
+        color = vec4(texture(screen_quad_texture, texture_coordinates).rgb, 1.0);
         break;
     }
+
+    FragColor = vec4(pow(color.rgb, vec3(1.0 / 2.2)), 1.0);
 }

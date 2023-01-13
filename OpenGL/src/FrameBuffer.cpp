@@ -13,7 +13,7 @@ FrameBuffer::FrameBuffer(uint32_t width, uint32_t height, uint8_t subsamples) :
     if (m_subsamples)
     {
         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_texture_color_buffer_id);
-        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_subsamples, GL_RGB, m_width, m_height, GL_TRUE);
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_subsamples, GL_RGB16F, m_width, m_height, GL_TRUE);
         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_texture_color_buffer_id, 0);
 
@@ -26,7 +26,7 @@ FrameBuffer::FrameBuffer(uint32_t width, uint32_t height, uint8_t subsamples) :
     else
     {
         glBindTexture(GL_TEXTURE_2D, m_texture_color_buffer_id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture_color_buffer_id, 0);

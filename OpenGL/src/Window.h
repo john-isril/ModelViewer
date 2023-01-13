@@ -1,8 +1,8 @@
 #pragma once
 #include <GLFW/glfw3.h>
-#include <cstdint>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <string_view>
 
 class Window
 {
@@ -23,9 +23,9 @@ public:
 	bool Resized() const;
 
 private:
-	const char* m_title;
-	uint32_t m_width_prev, m_height_prev;
+	const std::string_view m_title;
 	uint32_t m_width, m_height;
+	uint32_t m_width_prev, m_height_prev;
 	uint32_t m_width_mid, m_height_mid;
 	GLFWwindow* m_window;
 

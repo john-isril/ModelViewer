@@ -72,7 +72,7 @@ int main()
          1.0f,  1.0f,  1.0f, 1.0f
     };
 
-    VertexBuffer screen_quad_buffer{ screen_quad_vertices, sizeof(screen_quad_vertices) };
+    VertexBuffer screen_quad_buffer{ screen_quad_vertices, sizeof(screen_quad_vertices), BufferObject::Usage::STATIC };
     VertexBufferLayout screen_quad_layout{};
     screen_quad_layout.AddAttribute<float>(2);
     screen_quad_layout.AddAttribute<float>(2);
@@ -119,7 +119,9 @@ int main()
     skybox_shader.Bind();
     skybox_shader.SetUniform1i("skybox", 0);
 
-    glm::vec3 background_color{ 1.0f, 1.0f, 1.0f };
+    float gamma{ 2.2f }; // TODO: Let the user adjust this in editor. Postprocessing shader uses this as well.
+
+    glm::vec3 background_color{ pow(1.0f, gamma), pow(1.0f, gamma), pow(1.0f, gamma) };
 
     while (!window.Closed())
     {

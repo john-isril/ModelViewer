@@ -1,12 +1,14 @@
 #include "Window.h"
 #include <iostream>
+#include "Debugging/Log.h"
 
 void frame_buffer_size_callback(GLFWwindow* window, int width, int height);
 
 Window* callback_window_ref {nullptr};
 
 Window::Window(const char* title, uint32_t width, uint32_t height) :
-	m_title{title}, m_width{width}, m_height{height}, m_scroll_callback{nullptr}
+	m_title{title}, m_width{width}, m_height{height}, m_width_prev{0}, m_height_prev{0}, m_width_mid{0}, m_height_mid{0}, m_window{nullptr},
+    m_scroll_callback{nullptr}
 {
 	m_width_mid = static_cast<float>(m_width) / 2.0f;
 	m_height_mid = static_cast<float>(m_height) / 2.0f;
@@ -17,12 +19,15 @@ Window::Window(const char* title, uint32_t width, uint32_t height) :
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
-    m_window = glfwCreateWindow(m_width, m_height, m_title, nullptr, nullptr);
+    m_window = glfwCreateWindow(m_width, m_height, m_title.data(), nullptr, nullptr);
 
     if (!m_window)
     {
-        std::cerr << "Failed to create GLFW window\n";
+        int glfw_error_code{ glfwGetError(nullptr) };
+        Log::LogFatal("Failed to create GLFW window!\n");
         glfwTerminate();
+        std::exit(1);
+
         return;
     }
 
@@ -31,10 +36,13 @@ Window::Window(const char* title, uint32_t width, uint32_t height) :
     glfwMakeContextCurrent(m_window);
     glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetFramebufferSizeCallback(m_window, frame_buffer_size_callback);
+
+    Log::LogInfo("Window successfully created!\n");
 }
 
 Window::~Window()
 {
+    glfwDestroyWindow(m_window);
     glfwTerminate();
 }
 

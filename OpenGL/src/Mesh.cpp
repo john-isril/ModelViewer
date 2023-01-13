@@ -11,7 +11,7 @@ void Mesh::Setup()
 
 Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, std::vector<Texture>& textures) :
     m_vertices{ vertices }, m_indices{ indices }, m_textures{ textures },
-    m_VAO{}, m_VBO{ &vertices[0], vertices.size() * sizeof(Vertex) }, m_IBO{ &indices[0], m_indices.size() }
+    m_VAO{}, m_VBO{ &vertices[0], vertices.size() * sizeof(Vertex), BufferObject::Usage::DYNAMIC }, m_IBO{ &indices[0], m_indices.size(), BufferObject::Usage::DYNAMIC }
 {
 
     this->Setup();
@@ -39,13 +39,13 @@ Mesh::Mesh(const Mesh& mesh) :
         m_textures.push_back(mesh.m_textures[i]);
     }
     m_VBO.BindBufferData((void*)(&m_vertices[0]), m_vertices.size() * sizeof(Vertex));
-    m_IBO.BindBufferData(&m_indices[0], m_indices.size());
+    m_IBO.BindBufferData(&m_indices[0], m_indices.size() * sizeof(uint32_t));
 
     this->Setup();
 }
 
 Mesh::Mesh(aiMesh* mesh, const aiScene* scene, std::unordered_set<std::string>& loaded_textures_file_names, const std::string& directory) :
-    m_vertices{}, m_indices{}, m_textures{}, m_VAO{}, m_VBO{}, m_IBO{}
+    m_vertices{}, m_indices{}, m_textures{}, m_VAO{}, m_VBO{nullptr, 0, BufferObject::Usage::DYNAMIC}, m_IBO{ nullptr, 0, BufferObject::Usage::DYNAMIC }
 {
     m_vertices.reserve(mesh->mNumVertices);
 
@@ -119,7 +119,7 @@ Mesh::Mesh(aiMesh* mesh, const aiScene* scene, std::unordered_set<std::string>& 
     LoadMaterialTextures(material, aiTextureType_OPACITY, loaded_textures_file_names, Texture::Type::Alpha, directory);
 
     m_VBO.BindBufferData(&m_vertices[0], m_vertices.size() * sizeof(Vertex));
-    m_IBO.BindBufferData(&m_indices[0], m_indices.size());
+    m_IBO.BindBufferData(&m_indices[0], m_indices.size() * sizeof(uint32_t));
 
     this->Setup();
 }

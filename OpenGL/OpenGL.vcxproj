@@ -346,6 +346,7 @@
     <ClInclude Include="Dependencies\glm\glm\vec4.hpp" />
     <ClInclude Include="Dependencies\glm\glm\vector_relational.hpp" />
     <ClInclude Include="Dependencies\stb_image\stb_image.h" />
+    <ClInclude Include="src\BufferObject.h" />
     <ClInclude Include="src\Debugging\Log.h" />
     <ClInclude Include="src\Cubemap.h" />
     <ClInclude Include="src\DirectionalLight.h" />

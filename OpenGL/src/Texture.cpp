@@ -45,11 +45,11 @@ void Texture::Load(const char* file_path, bool flip_vertically_on_load)
 			break;
 
 		case 3:
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, m_buffer);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, m_buffer);
 			break;
 
 		case 4:
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_buffer);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_buffer);
 			break;
 
 		default:
